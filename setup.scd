@@ -9,16 +9,20 @@ Platform.userExtensionDir
 // SIN SOUND TEST
 { SinOsc.ar(XLine.kr(2000, 200), 0, 0.5) }.play;
 
-// PROXYSPACE BOOT
+// PROXYSPACE, BOOT, SYNTHDEFS 
 (
-Server.local.options.memSize * 128;
-s.options.numBuffers=4000;
-s.boot;
-p=ProxySpace.push(s);
-p.makeTempoClock;
-p.clock.tempo = 130/60;
+Task({
+	1.do{
+		Server.local.options.memSize * 128;
+		s.options.numBuffers=4000;
+		s.boot;
+		p=ProxySpace.push(s);
+		p.makeTempoClock;
+		p.clock.tempo = 1;
+		3.wait;
+		("SynthDefs.scd").loadRelative;
+}}).start;
 )
-
 // MISC QUIT
 
 s.quit
