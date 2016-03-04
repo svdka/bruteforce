@@ -3,17 +3,11 @@
 // S E T U P //
 
 
-// MISC
+// MISC - CHECK EXTENSIONS PATH
 Platform.userExtensionDir
 
-// test
+// SIN SOUND TEST
 { SinOsc.ar(XLine.kr(2000, 200), 0, 0.5) }.play;
-
-
-// BOOT
-JITLib extensions.include;
-s.meter
-s.makeWindow
 
 // PROXYSPACE BOOT
 (
@@ -25,7 +19,7 @@ p.makeTempoClock;
 p.clock.tempo = 130/60;
 )
 
+// MISC QUIT
 
 s.quit
 s.killAll
-ProxyMixer.new
