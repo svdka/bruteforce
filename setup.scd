@@ -20,6 +20,7 @@ Task({
 		p.makeTempoClock;
 		p.clock.tempo = 1;
 		3.wait;
+		("sampleDictionnary.scd").loadRelative;
 		("SynthDefs.scd").loadRelative;
 }}).start;
 )
