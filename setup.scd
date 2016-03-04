@@ -11,18 +11,12 @@ Platform.userExtensionDir
 
 // PROXYSPACE, BOOT, SYNTHDEFS 
 (
-Task({
-	1.do{
-		Server.local.options.memSize * 128;
-		s.options.numBuffers=4000;
-		s.boot;
-		p=ProxySpace.push(s);
-		p.makeTempoClock;
-		p.clock.tempo = 1;
-		3.wait;
-		("sampleDictionnary.scd").loadRelative;
-		("SynthDefs.scd").loadRelative;
-}}).start;
+Server.local.options.memSize * 128;
+s.options.numBuffers=4000;
+s.boot;
+p=ProxySpace.push(s);
+p.makeTempoClock;
+p.clock.tempo = 130/60;
 )
 // MISC QUIT
 
