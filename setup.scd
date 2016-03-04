@@ -3,13 +3,13 @@
 // S E T U P //
 
 
-// MISC - CHECK EXTENSIONS PATH
+// MISC
 Platform.userExtensionDir
 
-// SIN SOUND TEST
+// test
 { SinOsc.ar(XLine.kr(2000, 200), 0, 0.5) }.play;
 
-// PROXYSPACE, BOOT, SYNTHDEFS 
+// PROXYSPACE BOOT
 (
 Server.local.options.memSize * 128;
 s.options.numBuffers=4000;
@@ -18,7 +18,7 @@ p=ProxySpace.push(s);
 p.makeTempoClock;
 p.clock.tempo = 130/60;
 )
-// MISC QUIT
 
+// QUIT
 s.quit
 s.killAll
