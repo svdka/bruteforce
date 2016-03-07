@@ -19,6 +19,37 @@
 ~cymbal.free
 
 
+(
+~cymbal = Pbind(
+	\instrument, \readsfsin,
+	\buf,d[\fb][2],
+	\amp, 0.1,
+	\dur, 1,
+	\rate, 1,
+	\heartrate, 0.02,
+
+))
+
+~cymbal.play
+~cymbal.fadeTime=1
+~cymbal.free
+
+(
+~cymbal2 = Pbind(
+	\instrument, \readsfsin,
+	\buf,d[\full][0],
+	\amp, 0.5,
+	\dur, 12,
+	\rate, 1,
+	\heartrate, 0.125,
+
+))
+
+~cymbal2.play
+~cymbal2.fadeTime=5
+~cymbal2.free
+
+
 // BASS TEST (BASS)
 
 (

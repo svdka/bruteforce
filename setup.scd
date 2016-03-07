@@ -16,7 +16,7 @@ s.options.numBuffers=4000;
 s.boot;
 p=ProxySpace.push(s);
 p.makeTempoClock;
-p.clock.tempo = 1;
+p.clock.tempo = 123/60;
 ("SynthDefs.scd").loadRelative;
 )
 

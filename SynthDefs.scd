@@ -14,6 +14,7 @@
 // 2.4  ORGAN
 // 2.5  BASS                    (midinote = 42, amp=0.5, clic=0.5)
 // 2.6. BELL                    (freq = 261, tone = 4, art = 1, amp = 0.8, pan = 0)
+// 2.7  S.O.S BELL (Based on D.Stowell)
 // 3.   OTHER
 // 3.1. SAW                     (freq, amp, gate, )
 // 4.   DRUMKIT
@@ -38,7 +39,8 @@ SynthDef(\readsf,
 SynthDef(\readsfsin,
 	{arg out = 0, buf = 0, amp = 0.5, pan = 0, pos = 0, rel=15, heartrate=5;
 		var sig,env ;
-		var rate = SinOscFB.ar(heartrate, 0.5, 1);
+	//	var rate = SinOscFB.ar(heartrate, 0.5, 1);
+		var rate = SinOsc.ar(heartrate, 0.1, 1);
 		sig = Pan2.ar(PlayBuf.ar(1,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:2),pan);
 		env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:2);
 		sig = sig * env;
@@ -138,7 +140,7 @@ SynthDef(\bass,
 )
 
 // 2.6. Phase Modulated Bell
-
+(
 SynthDef(\pbell, {
 arg out = 0, freq = 261, tone = 4, art = 1, amp = 0.8, pan = 0;
 var env, mod, sig;
@@ -152,6 +154,28 @@ sig = sig * EnvGen.kr(env, timeScale: 1.3*art,
 	levelScale: Rand(0.1, 0.5), doneAction:2);
 Out.ar(out, sig*amp);
 }).add;
+)
+// 2.7. SOS Bell (Based on Dan Stowell Version)
+(
+(
+SynthDef(\sos_bell, { |freq=440, out=0, amp=0.1, pan=0|
+var son, strike, hum;
+// Stretched harmonic series
+son = SinOsc.ar(#[2, 3, 4.1, 5.43, 6.8, 8.21] * freq, 0,
+	     	 #[1, 0.9, 0.8, 0.7, 0.6, 0.5] * 0.1);
+            son = son * EnvGen.ar(Env.new([0,1,0.3, 0.2, 0], [0, 0.3, 0.3, 0.3]));
+// A bit of FM adds 'warble'
+            son = son * LFTri.ar({Rand(1.0, 1.8)}.dup(6), 1, 0.3, 0.7);
+// Mix down the partials in the main sound
+            son = son.mean;
+            strike = SinOsc.ar(LFNoise1.ar(freq * 36, 100, freq*8), 1, 0.1) *
+			EnvGen.ar(Env.new([0,1,0.2, 0.1, 0], [0, 0.01, 0, 0.04]));
+	        hum = SinOsc.ar([freq*[1.01,0.5], freq*0.47], 0, //added sin value 0.5
+		    EnvGen.ar(Env.new([0,0.05,0.05,0], [0.5,0.5,1]), doneAction:2)).mean;
+Out.ar(out, Pan2.ar((son + strike + hum) * 4 * amp, pan));
+})).add)
+
+
 
 
 
@@ -224,16 +248,27 @@ SynthDef(\kick, {arg out = 0, amp = 0.3, sinfreq = 60, glissf = 0.9, att = 0.01,
 }).add;
 
 // 4.2 KICKHE
+(
+SynthDef(\kick2, {
+	arg out=0, amp=0.1, pan=0;
+	var env0, env1, env1m, son;
 
-SynthDef(\kickhe, {arg out = 0, punch = 1, amp = 0.4;
-    var freq = EnvGen.kr(Env([400, 66], [0.08], -3)),
-	sig = Normalizer.ar(SinOsc.ar(freq, 0.5pi, punch).distort, 1) * amp
-            * EnvGen.kr(Env([0, 1, 0.8, 0], [0.01, 0.1, 0.2]), doneAction: 2);
-    Out.ar(Out, sig ! 2);
-}).add;
+	env0 =  EnvGen.ar(Env.new([0.5, 0.5, 0.5, 0], [0.005, 0.06, 0.26], [-4, -2, -4]), doneAction:2);
+	env1 =  EnvGen.ar(Env.new([110, 59, 29], [0.005, 0.29], [-4, -5]));
+	env1m = env1.midicps;
 
+	son = LFPulse.ar(env1m, 0, 0.5, 2, -0.5);
+	son = son + WhiteNoise.ar(2);
+	son = LPF.ar(son, env1m*1.5, env0);
+	son = son + SinOsc.ar(env1m, 0.5, env0);
 
+	son = FreeVerb.ar(son * 1.2, 0.2, 0.5);
+	son = son.clip2(1);
 
+	Out.ar(out, Pan2.ar(son * amp));
+},
+).add
+)
 
 
 

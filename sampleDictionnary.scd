@@ -117,6 +117,88 @@ d.add(\space ->
 		Buffer.read(s,sf.fullPath);
 	});
 );
+d.add(\ga_sn ->
+	PathName("d:/samples/GASN").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+d.add(\ga_ki ->
+	PathName("d:/samples/GAKI").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+d.add(\ga_di ->
+	PathName("d:/samples/GADI").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+
+// 909 PACK
+d.add(\bd_9 ->
+	PathName("d:/samples/BD_9").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+d.add(\cp_9 ->
+	PathName("d:/samples/CP_9").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+d.add(\hh_9 ->
+	PathName("d:/samples/HH_9").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+d.add(\ht_9 ->
+	PathName("d:/samples/HT_9").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+d.add(\lt_9 ->
+	PathName("d:/samples/LT_9").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+d.add(\mt_9 ->
+	PathName("d:/samples/MT_9").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+d.add(\oh_9 ->
+	PathName("d:/samples/OH_9").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+d.add(\rd_9 ->
+	PathName("d:/samples/RD_9").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+d.add(\rs_9 ->
+	PathName("d:/samples/RS_9").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+d.add(\sd_9 ->
+	PathName("d:/samples/SD_9").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
+
+
 )
 
 
