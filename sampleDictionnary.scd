@@ -111,6 +111,12 @@ d.add(\fb ->
 		Buffer.read(s,sf.fullPath);
 	});
 );
+d.add(\space ->
+	PathName("d:/samples/SPACE").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
 )
 
 
