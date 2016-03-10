@@ -13,8 +13,10 @@
 // 2.3  ELECTRIC GUITAR
 // 2.4  ORGAN
 // 2.5  BASS                    (midinote = 42, amp=0.5, clic=0.5)
+// 2.5.1. TECHNOBASS
 // 2.6. BELL                    (freq = 261, tone = 4, art = 1, amp = 0.8, pan = 0)
 // 2.7  S.O.S BELL (Based on D.Stowell)
+// 2.8  PROPHET
 // 3.   OTHER
 // 3.1. SAW                     (freq, amp, gate, )
 // 4.   DRUMKIT
@@ -105,59 +107,32 @@ SynthDef(\acc, {arg out=0, freq=440, pan=0, sustain=0.5, amp=0.3;
 // 2.5. BASS
 
 (
-SynthDef(\bass,
+SynthDef(\bas,
 	{
-
-		 | out=0, midinote = 42, amp=0.5, clic=0.5|
-  var freq = midinote.midicps;
-  var subfreq = freq / 2;
-
-  // Envelopes
-  var subenv = EnvGen.kr(Env.perc(0, 1), doneAction:2);
-  var env = EnvGen.kr(Env.perc(0, 0.5));
-
-  // Component synthesis
-  var pluck = Pluck.ar(PinkNoise.ar,1, 0.4, subfreq.reciprocal) * subenv * clic;
-  var tri = VarSaw.ar(freq) * env;
-  var sin = SinOsc.ar(freq) * env;
-  var sub = (SinOsc.ar([subfreq, subfreq - 2, subfreq + 2]).sum * subenv).tanh;
-  var click = RLPF.ar(Impulse.ar(0), [2000, 8000], 1).sum * 2;
-
-  // Initial signal
-  var sig = pluck + tri + sub + click;
-
-  // Resonant LPFs
-  sig = RLPF.ar(sig, XLine.ar(freq * 100, freq * 10, 0.15));
-  sig = sig + (MoogFF.ar(sig, freq * 20, 2.5) * 0.1);
-
-  // EQ resulting signal
-  sig = BPeakEQ.ar(sig, 400, 0.5, -9);
-  sig = BPeakEQ.ar(sig, 2000, 0.5, 6);
-  sig = BHiShelf.ar(sig, 8000, 1, 3);
-  sig = BPeakEQ.ar(sig, 200, 1, 3);
-
-  // Apply another envelope to dampen a bit more
-  sig = sig * XLine.kr(1, 0.6, 0.1);
-
-  // Tanh distortion / limiting
-  sig = (sig * 1).tanh;
-
-  // Another round of signal coloring, using another RLPF
-  // and sine components
-  sig = sig + RLPF.ar(sig, XLine.ar(freq * 100, freq * 10, 0.15)) + sin + sub;
-
-  // Another round of tanh distortion / limiting
-  sig = (sig / 1).tanh;
-
-  // Another resonant LPF
-  sig = MoogFF.ar(sig, XLine.ar(freq*150, freq*30, 0.1), 0.1);
-  sig = sig * amp;
-  Out.ar(out, Splay.ar(sig));
-
-
-	}
+		arg amp=0,sus=1,pan=0,freq=0;
+		var osc, env;
+		freq = freq / 4;
+		amp = amp / 3;
+		osc = LFTri.ar(freq, mul:amp) + SinOscFB.ar(freq,mul: amp) + LFSaw.ar(freq, mul: amp);
+		env = EnvGen.ar(Env.perc(0.01, sus),doneAction:2);
+		Out.ar(0,Pan2.ar( osc * env , pan));
+		}
 ).add;
 )
+
+// 2.5.1 TECHNOBASS
+
+SynthDef(\technobass, { |freq = 440, gate = 1, amp = 0.5, slideTime = 0.17, ffreq = 1100, width = 0.15,
+        detune = 1.005, preamp = 4|
+    var    sig,
+        env = Env.adsr(0.01, 0.3, 0.4, 0.1);
+    freq = Lag.kr(freq, slideTime);
+    sig = Mix(VarSaw.ar([freq, freq * detune], 0, width, preamp)).distort * amp
+        * EnvGen.kr(env, gate, doneAction: 2);
+    sig = LPF.ar(sig, ffreq);
+    Out.ar(0, sig ! 2)
+}).add;
+
 
 // 2.6. Phase Modulated Bell
 (
@@ -196,6 +171,24 @@ Out.ar(out, Pan2.ar((son + strike + hum) * 4 * amp, pan));
 })).add)
 
 
+// 2.7 PROPHET
+(
+SynthDef(\prophet,{|out= 0 freq = 440 amp = 1.0 gate=1 lforate = 10 lfowidth= 0.5 cutoff= 12000 rq=0.5 pan = 0.0|
+
+	var lfo, pulse, filter, env;
+
+	lfo = LFTri.kr(lforate*[1,1.01],Rand(0,2.0)!2);
+
+	pulse = Pulse.ar(freq*[1,1.01],lfo*lfowidth+0.5);
+
+	filter = RLPF.ar(pulse,cutoff,rq);
+
+	env = EnvGen.ar(Env.adsr(0.01,0.0,1.0,0.5),gate,doneAction:2);
+
+	Out.ar(out,Pan2.ar(Mix(filter)*env*amp*0.5,pan));
+
+}).add
+)
 
 
 
@@ -317,7 +310,7 @@ SynthDef(\kick2, { |out=0, amp=0.1, pan=0, fratio=1.5, freqpan=0.01, spread=0.08
 // --------------- NOISE BASED -----------------
 
 (
-SynthDef(\harsh, { | out=0 |
+SynthDef(\harsh, { | out=0, amp=0.1|
 	var sig, c, d, n, e, f;
 
 	c = SinOsc.ar(20) * Env.perc(0.01,0.2).ar(0, TDuty.ar(Dseq([1/4,1/2,1/8,1/8],inf)));
@@ -336,6 +329,7 @@ SynthDef(\harsh, { | out=0 |
 	.ar(0, Impulse.ar(1/32)) * 2 ;
 	sig = (( c + f) ! 2) + d + e;
 	sig = sig.tanh * 0.5;
+	sig = sig * amp;
 	Out.ar(out, sig);
 
 }).add
