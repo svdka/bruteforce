@@ -77,4 +77,8 @@ SynthDef(\reverb, {|out=0, gate=1|
 }).add;
 )
 
+~verb = Pbind(
+	\instrument, \reverb,
+)
+~verb.play
 	
