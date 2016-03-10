@@ -47,9 +47,9 @@
 )
 
 // 1.5 CHORUS & COMPRESSION
-
+(
 SynthDef(\choruscompresseffect, {|out =0 gate= 1|
-	var source = In.ar(out,2);
+	var source = In.ar(0,2);
 	var chorus;
 	var env = Linen.kr(gate, 0.1, 1, 0.1, 2);
 
@@ -65,4 +65,16 @@ SynthDef(\choruscompresseffect, {|out =0 gate= 1|
 
 }).add;
 
+
 )
+
+
+(
+SynthDef(\reverb, {|out=0, gate=1|
+	var source = In.ar(0, 2);
+	var reverb = FreeVerb.ar(source, 0.5, 0.5, 0.5, 2);
+	Out.ar(0, reverb);
+}).add;
+)
+
+	
