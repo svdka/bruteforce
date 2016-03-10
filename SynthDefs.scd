@@ -271,13 +271,12 @@ SynthDef(\drone, { arg out = 0, speed = 1, amp = 0.5, rel = 0.5, dur = 1, freq=2
 
 (
 SynthDef.new(\detuned, {
-    arg freq = 440, freqf = 3000, atk = 0.1, rls = 0.1;
+    arg freq = 440, freqf = 3000, atk = 0.1, rel = 0.1, pan=0;
     var env, synth1, synth2;
-    env = EnvGen.ar(Env.new([0, 1, 0], [atk, rls]), doneAction:2);
-    synth1 = LPF.ar(Pulse.ar(freq, 0.4, mul:0.1), freqf)*env;
+    env = EnvGen.ar(Env.new([0, 1, 0], [atk, rel]), doneAction:2);
+	synth1 = LPF.ar(Pulse.ar(freq, [0.4',0.6], mul:0.1), freqf)*env;
     synth2 = LPF.ar(Pulse.ar(freq, 0.6, mul:0.1), freqf)*env;
-    Out.ar(0, synth1);
-    Out.ar(1, synth2);
+	Out.ar(0, Splay.ar([synth1,synth2]));
 }).add;
 )
 
