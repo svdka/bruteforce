@@ -1,33 +1,63 @@
 (
 
 // SYNTHDEFS // UNIFIED SYNTAX
-// 1.   SAMPLE-BASED
-// 1.1. READ SOUND FILE        (rate, amp, pan, pos, rel)
-// 1.2. READ SOUND FILE SINCTRL(heartrate)
-// 1.3. READ SOUND FILE ACCELERATE (centerrate, level)
+
+
+//      ///////////////////
+//      //1. SAMPLE BASED//
+//      ///////////////////
+//
+// 1.1. READ SOUND FILE                   (rate, amp, pan, pos, rel)
+// 1.2. READ SOUND FILE SINCTRL           (heartrate)
+// 1.3. READ SOUND FILE ACCELERATE        (centerrate, level)
 // 1.4.
 // 1.5.
-// 2.   CLASSIC-INSTRUMENTS
-// 2.1  ACCOUSTIC GUITAR
-// 2.2  TAP GUITAR
-// 2.3  ELECTRIC GUITAR
-// 2.4  ORGAN
-// 2.5  BASS                    (midinote = 42, amp=0.5, clic=0.5)
-// 2.5.1. TECHNOBASS
-// 2.6. BELL                    (freq = 261, tone = 4, art = 1, amp = 0.8, pan = 0)
-// 2.7  S.O.S BELL (Based on D.Stowell)
-// 2.8  PROPHET
-// 3.   OTHER
-// 3.1. SAW                     (freq, amp, gate, )
-// 4.   DRUMKIT
-// 4.1  CLAP
-// 4.2  KICK
-// 4.3  HH
-// 5.   NOISE BASED
-// 5.1
-// 5.2  VINYL                  (fade : crossfade between cracks & "beat", power : beat level)
 
-// -------------- 1.  SAMPLE  BASED -------------//
+
+//      //////////////////////////
+//      //2. CLASSIC INSTRUMENTS//
+//      //////////////////////////
+//
+// 2.1. ACCOUSTIC GUITAR
+// 2.2. BASS                              (midinote = 42, amp=0.5, clic=0.5)
+// 2.3. BELL                              (freq = 261, tone = 4, art = 1, amp = 0.8, pan = 0)
+// 2.4. S.O.S BELL (Based on D.Stowell)
+
+
+//      /////////////////////////////
+//      //3. ELECTRONIC INSTRUMENTS//
+//      /////////////////////////////
+//
+// 3.1. SAW                               (freq, amp, gate)
+// 3.2. PROPHET
+// 3.3. TECHNOBASS
+// 3.4. DRONE
+// 3.5. DETUNED
+
+
+//      ///////////////////
+//      // 4. DRUM SYNTHS//
+//      ///////////////////
+//
+// 4.1  KICK
+// 4.2  CLAP
+// 4.3  HH
+
+
+//      ////////////
+//      // 5. MISC//
+//      ////////////
+//
+// 5.1. HARSH
+// 5.2. VINYL                             (fade : crossfade between cracks & "beat", power : beat level)
+
+
+
+
+//      ///////////////////
+//      //1. SAMPLE BASED//
+//      ///////////////////
+//
 // 1.1 READ SOUND FILE
 
 SynthDef(\readsf,
@@ -71,7 +101,6 @@ SynthDef(\accelerate, {
 }).add;
 )
 
-//
 // SynthDef(\backwards,
 // 	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
 // 		var sig,env ;
@@ -81,14 +110,16 @@ SynthDef(\accelerate, {
 // 		sig = sig * amp;
 // 		Out.ar(out,sig);
 // }).add;
-//
 
 //  {var rate= [1, -1].choose.postln; PlayBuf.ar(~buffer.numChannels, ~buffer.bufnum, rate, startPos: ~buffer.numFrames-2*(rate<0).binaryValue, doneAction:2)}.play;
 
 
 
 
-// -------------- 1.  CLASSIC INSTRUMENTS -------------//
+//      //////////////////////////
+//      //2. CLASSIC INSTRUMENTS//
+//      //////////////////////////
+//
 // 2.1. ACCOUSTIC GUITAR
 
 (
@@ -103,8 +134,7 @@ SynthDef(\acc, {arg out=0, freq=440, pan=0, sustain=0.5, amp=0.3;
 }).add;
 )
 
-
-// 2.5. BASS
+// 2.2. BASS
 
 (
 SynthDef(\bas,
@@ -120,21 +150,8 @@ SynthDef(\bas,
 ).add;
 )
 
-// 2.5.1 TECHNOBASS
+// 2.3. Phase Modulated Bell
 
-SynthDef(\technobass, { |freq = 440, gate = 1, amp = 0.5, slideTime = 0.17, ffreq = 1100, width = 0.15,
-        detune = 1.005, preamp = 4|
-    var    sig,
-        env = Env.adsr(0.01, 0.3, 0.4, 0.1);
-    freq = Lag.kr(freq, slideTime);
-    sig = Mix(VarSaw.ar([freq, freq * detune], 0, width, preamp)).distort * amp
-        * EnvGen.kr(env, gate, doneAction: 2);
-    sig = LPF.ar(sig, ffreq);
-    Out.ar(0, sig ! 2)
-}).add;
-
-
-// 2.6. Phase Modulated Bell
 (
 SynthDef(\pbell, {
 arg out = 0, freq = 261, tone = 4, art = 1, amp = 0.8, pan = 0;
@@ -150,7 +167,9 @@ sig = sig * EnvGen.kr(env, timeScale: 1.3*art,
 Out.ar(out, sig*amp);
 }).add;
 )
-// 2.7. SOS Bell (Based on Dan Stowell Version)
+
+// 2.4. SOS Bell (Based on Dan Stowell Version)
+
 (
 (
 SynthDef(\sos_bell, { |freq=440, out=0, amp=0.1, pan=0|
@@ -171,29 +190,13 @@ Out.ar(out, Pan2.ar((son + strike + hum) * 4 * amp, pan));
 })).add)
 
 
-// 2.7 PROPHET
-(
-SynthDef(\prophet,{|out= 0 freq = 440 amp = 1.0 gate=1 lforate = 10 lfowidth= 0.5 cutoff= 12000 rq=0.5 pan = 0.0|
-
-	var lfo, pulse, filter, env;
-
-	lfo = LFTri.kr(lforate*[1,1.01],Rand(0,2.0)!2);
-
-	pulse = Pulse.ar(freq*[1,1.01],lfo*lfowidth+0.5);
-
-	filter = RLPF.ar(pulse,cutoff,rq);
-
-	env = EnvGen.ar(Env.adsr(0.01,0.0,1.0,0.5),gate,doneAction:2);
-
-	Out.ar(out,Pan2.ar(Mix(filter)*env*amp*0.5,pan));
-
-}).add
-)
 
 
-
-// -------------- 3. OTHER  -------------//
-// 3.1 SAW
+//      /////////////////////////////
+//      //3. ELECTRONIC INSTRUMENTS//
+//      /////////////////////////////
+//
+// 3.1. SAW
 
 (
 SynthDef(\saw, {| out=0, freq, gate=1, amp=3|
@@ -218,7 +221,41 @@ SynthDef(\saw, {| out=0, freq, gate=1, amp=3|
 }).add;
 )
 
-// 3.1 DRONE
+// 3.2. PROPHET
+
+(
+SynthDef(\prophet,{|out= 0 freq = 440 amp = 1.0 gate=1 lforate = 10 lfowidth= 0.5 cutoff= 12000 rq=0.5 pan = 0.0|
+
+	var lfo, pulse, filter, env;
+
+	lfo = LFTri.kr(lforate*[1,1.01],Rand(0,2.0)!2);
+
+	pulse = Pulse.ar(freq*[1,1.01],lfo*lfowidth+0.5);
+
+	filter = RLPF.ar(pulse,cutoff,rq);
+
+	env = EnvGen.ar(Env.adsr(0.01,0.0,1.0,0.5),gate,doneAction:2);
+
+	Out.ar(out,Pan2.ar(Mix(filter)*env*amp*0.5,pan));
+
+}).add
+)
+
+// 3.3. TECHNOBASS
+
+SynthDef(\technobass, { |freq = 440, gate = 1, amp = 0.5, slideTime = 0.17, ffreq = 1100, width = 0.15,
+        detune = 1.005, preamp = 4|
+    var    sig,
+        env = Env.adsr(0.01, 0.3, 0.4, 0.1);
+    freq = Lag.kr(freq, slideTime);
+    sig = Mix(VarSaw.ar([freq, freq * detune], 0, width, preamp)).distort * amp
+        * EnvGen.kr(env, gate, doneAction: 2);
+    sig = LPF.ar(sig, ffreq);
+    Out.ar(0, sig ! 2)
+}).add;
+
+// 3.4. DRONE
+
 (
 SynthDef(\drone, { arg out = 0, speed = 1, amp = 0.5, rel = 0.5, dur = 1, freq=200;
 	var base = LFNoise1;
@@ -230,29 +267,29 @@ SynthDef(\drone, { arg out = 0, speed = 1, amp = 0.5, rel = 0.5, dur = 1, freq=2
 }).add
 )
 
-// -------------- 4.  DRUM KIT -------------//
+// 3.5. DETUNED
 
-// 4.1 HH
-
-SynthDef(\hihat, {arg out = 0, amp = 0.5, att = 0.01, rel = 0.2, ffreq = 6000, pan = 0;
-	var snd = WhiteNoise.ar(amp);
-	var env = Env.perc(att, rel).kr(doneAction: 2);
-	snd = HPF.ar(snd * env, ffreq);
-	Out.ar(out, Pan2.ar(snd, pan));
+(
+SynthDef.new(\detuned, {
+    arg freq = 440, freqf = 3000, atk = 0.1, rls = 0.1;
+    var env, synth1, synth2;
+    env = EnvGen.ar(Env.new([0, 1, 0], [atk, rls]), doneAction:2);
+    synth1 = LPF.ar(Pulse.ar(freq, 0.4, mul:0.1), freqf)*env;
+    synth2 = LPF.ar(Pulse.ar(freq, 0.6, mul:0.1), freqf)*env;
+    Out.ar(0, synth1);
+    Out.ar(1, synth2);
 }).add;
-
-// 4.1 SNARE
-
-SynthDef(\snare, {arg out = 0, amp = 0.1, sinfreq = 180, att = 0.01, rel = 0.2, ffreq = 2000, pan = 0;
-	var snd1 = WhiteNoise.ar(amp);
-	var snd2 = SinOsc.ar(sinfreq,0,amp);
-	var env = EnvGen.kr(Env.perc(att, rel), doneAction: 2);
-	var sum = HPF.ar(snd1 * env, ffreq)+(snd2*env);
-	Out.ar(out, Pan2.ar(sum, pan));
-}).add;
+)
 
 
-// 4.2 KICK
+
+
+//      ///////////////////
+//      // 4. DRUM SYNTHS//
+//      ///////////////////
+//
+// 4.1. KICK
+
 (
 SynthDef(\kick, {
 	arg out=0, amp=0.1, pan=0;
@@ -275,8 +312,7 @@ SynthDef(\kick, {
 ).add
 )
 
-
-// 4.3 KICK (2) (based on grirgz)
+// 4.1. KICK (2) (based on grirgz)
 
 (
 SynthDef(\kick2, { |out=0, amp=0.1, pan=0, fratio=1.5, freqpan=0.01, spread=0.08, timeScale=1|
@@ -306,8 +342,33 @@ SynthDef(\kick2, { |out=0, amp=0.1, pan=0, fratio=1.5, freqpan=0.01, spread=0.08
 	Out.ar(out, son);
 }).add)
 
+// 4.2. SNARE
 
-// --------------- NOISE BASED -----------------
+SynthDef(\snare, {arg out = 0, amp = 0.1, sinfreq = 180, att = 0.01, rel = 0.2, ffreq = 2000, pan = 0;
+	var snd1 = WhiteNoise.ar(amp);
+	var snd2 = SinOsc.ar(sinfreq,0,amp);
+	var env = EnvGen.kr(Env.perc(att, rel), doneAction: 2);
+	var sum = HPF.ar(snd1 * env, ffreq)+(snd2*env);
+	Out.ar(out, Pan2.ar(sum, pan));
+}).add;
+
+// 4.3. HH
+
+SynthDef(\hihat, {arg out = 0, amp = 0.5, att = 0.01, rel = 0.2, ffreq = 6000, pan = 0;
+	var snd = WhiteNoise.ar(amp);
+	var env = Env.perc(att, rel).kr(doneAction: 2);
+	snd = HPF.ar(snd * env, ffreq);
+	Out.ar(out, Pan2.ar(snd, pan));
+}).add;
+
+
+
+
+//      ////////////
+//      // 5. MISC//
+//      ////////////
+//
+// 5.1. HARSH
 
 (
 SynthDef(\harsh, { | out=0, amp=0.1|
@@ -335,8 +396,7 @@ SynthDef(\harsh, { | out=0, amp=0.1|
 }).add
 )
 
-
-
+// 5.2. VINYL
 
 (
 SynthDef(\vinyl, { | out=0, amp= 0.5, rel=0, dur=1, power=1, fade = 0|
