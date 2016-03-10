@@ -1,3 +1,9 @@
+
+// EXEMPLE DE
+
+~verb = {Out.ar(0, FreeVerb.ar(InFeedback.ar(40, 2), 0.5, 0.5, mul:1))}
+
+
 // FX
 
 // 1.1 REVERB
