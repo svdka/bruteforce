@@ -3,8 +3,8 @@
 // SYNTHDEFS // UNIFIED SYNTAX
 // 1.   SAMPLE-BASED
 // 1.1. READ SOUND FILE        (rate, amp, pan, pos, rel)
-// 1.2.
-// 1.3.
+// 1.2. READ SOUND FILE SINCTRL(heartrate)
+// 1.3. READ SOUND FILE ACCELERATE (centerrate, level)
 // 1.4.
 // 1.5.
 // 2.   CLASSIC-INSTRUMENTS
@@ -21,6 +21,9 @@
 // 4.1  CLAP
 // 4.2  KICK
 // 4.3  HH
+// 5.   NOISE BASED
+// 5.1
+// 5.2  VINYL                  (fade : crossfade between cracks & "beat", power : beat level)
 
 // -------------- 1.  SAMPLE  BASED -------------//
 // 1.1 READ SOUND FILE
@@ -35,6 +38,7 @@ SynthDef(\readsf,
 		Out.ar(out,sig);
 }).add;
 
+// 1.2 READ SOUND FILE WITH SIN DETERMINED SPEED
 
 SynthDef(\readsfsin,
 	{arg out = 0, buf = 0, amp = 0.5, pan = 0, pos = 0, rel=15, heartrate=5;
@@ -48,6 +52,22 @@ SynthDef(\readsfsin,
 		Out.ar(out,sig);
 }).add;
 
+// 1.3 READ SOUND FILE WITH ACCELERATED READING
+// (based on code "Risset rhythm by snappizz")
+
+(
+SynthDef(\accelerate, {
+    |out = 0, buf, megabardur = 3.0, bufdur = 3.0, level = 0, bandwidth = 1, centerrate = 1, dir = 1, amp = 0.5|
+    var t, rate, snd, power;
+    t = Sweep.kr * dir;
+    rate = bufdur * 2.log / megabardur * pow(2, t / megabardur + level);
+    power = (pi * bandwidth * 0.5 * log2(rate / centerrate)).clip2(pi).cos + 1 / 2;
+    snd = PlayBuf.ar(1,buf, BufRateScale.kr(buf) * rate, loop: 1) * power;
+    EnvGen.kr(Env([0, 0], [megabardur]), doneAction: 2);
+	snd = snd * amp;
+    Out.ar(out,amp * snd.tanh);
+}).add;
+)
 
 //
 // SynthDef(\backwards,
@@ -207,12 +227,13 @@ SynthDef(\saw, {| out=0, freq, gate=1, amp=3|
 
 // 3.1 DRONE
 (
-SynthDef(\drone, { arg out = 0, speed = 1, amp = 0.5;
+SynthDef(\drone, { arg out = 0, speed = 1, amp = 0.5, rel = 0.5, dur = 1, freq=200;
 	var base = LFNoise1;
-	var sig = HPF.ar(FreeVerb2.ar(*XFade2.ar(SinOscFB.ar([120,81],base.ar(speed*2)+1/4),
-		SinOscFB.ar([80,85],base.ar(speed)+1/2),base.ar(2))),220);
-	sig = sig * amp;
-	Out.ar(out, sig * amp);
+    var adsr = EnvGen.ar(Env.linen(dur*4,rel,0, 1),doneAction:2);
+	var sig =  HPF.ar(FreeVerb2.ar(*XFade2.ar(SinOscFB.ar([20,freq],base.ar(speed*2)+1/8),
+	SinOscFB.ar([120,25],base.ar(speed)+1/2),base.ar(20))),220);
+	sig = (sig * adsr) * amp;
+	Out.ar(out, sig);
 }).add
 )
 
@@ -237,19 +258,10 @@ SynthDef(\snare, {arg out = 0, amp = 0.1, sinfreq = 180, att = 0.01, rel = 0.2, 
 	Out.ar(out, Pan2.ar(sum, pan));
 }).add;
 
-// 4.1 KICK
 
-SynthDef(\kick, {arg out = 0, amp = 0.3, sinfreq = 60, glissf = 0.9, att = 0.01, rel = 0.45, pan = 0;
-	var gliss = XLine.kr(sinfreq, sinfreq*glissf, rel);
-	var snd = SinOsc.ar(gliss);
-	var env = EnvGen.kr(Env.perc(att, rel), doneAction: 2);
-	snd = snd * env * amp;
-	Out.ar(out, Pan2.ar(snd, pan));
-}).add;
-
-// 4.2 KICKHE
+// 4.2 KICK
 (
-SynthDef(\kick2, {
+SynthDef(\kick, {
 	arg out=0, amp=0.1, pan=0;
 	var env0, env1, env1m, son;
 
@@ -271,10 +283,82 @@ SynthDef(\kick2, {
 )
 
 
+// 4.3 KICK (2) (based on grirgz)
+
+(
+SynthDef(\kick2, { |out=0, amp=0.1, pan=0, fratio=1.5, freqpan=0.01, spread=0.08, timeScale=1|
+	var env0, env1, env1m, son;
+
+	//freqpan = [-1,0,1] * freqpan;
+	env0 = \env0.kr(Env.new([0, 1, 0.5, 0], [0.105, 0.16, 00.2], [-4, -2, -4]));
+	env1 = \env1.kr(Env.new([110, 32, 29], [0.105, 0.29], [-4, -5]));
+
+	env0 =  EnvGen.ar(env0, doneAction:2, timeScale:timeScale);
+	env1 = EnvGen.ar(env1, timeScale:timeScale);
+	env1m = env1.midicps;
+
+	son = LFPulse.ar(env1m * freqpan, 0, 0.5, 1, -0.5);
+	son = son + WhiteNoise.ar(1);
+	son = LPF.ar(son, env1m*fratio);
+	son = son + SinOsc.ar(env1m, 0.5);
+	son = LPF.ar(son, \lpf.kr(2000));
+
+	son = son * 1.2;
+	son = son.clip2(1);
+
+	son = son * amp;
+	son = son * env0;
+	son = Pan2.ar(son, pan, amp);
+
+	Out.ar(out, son);
+}).add)
 
 
+// --------------- NOISE BASED -----------------
 
+(
+SynthDef(\harsh, { | out=0 |
+	var sig, c, d, n, e, f;
 
+	c = SinOsc.ar(20) * Env.perc(0.01,0.2).ar(0, TDuty.ar(Dseq([1/4,1/2,1/8,1/8],inf)));
+	5.do{ c = (c.distort + c)*0.75};
+	c = c * 4;
+	d = LPF.ar(Saw.ar([20,47]).sum , XLine.ar(1000,200,0.5)) * Env.perc.ar(0, Impulse.ar(1/16)) * 0.5;
+	d = (GVerb.ar( d , roomsize:10, revtime:6) * 200).clip(-1.0,1.0) * 0.3;
+	n = 12;
+	e = ( Saw.ar( 40*(1..n) * ({ LFNoise1.ar(0.1).range(1,1.01) } ! n) ) *
+		({ LFNoise1.ar(0.1).range(0.0,1.0) }!n)).sum * 60;
+	e = CombC.ar(e, 0.1, 0.1, 4) + e;
+	e = e.tanh * 0.3 * SinOsc.ar(0.05).range(0.5,1.0);
+	e = e.dup;
+	e = e * SinOsc.ar(0.01).range(0.2,1.0) * 0.5;
+	f = Blip.ar(100) * Blip.ar(100) * Env([0.0,0.0,1.0],[8,8],[\step,\linear,\step])
+	.ar(0, Impulse.ar(1/32)) * 2 ;
+	sig = (( c + f) ! 2) + d + e;
+	sig = sig.tanh * 0.5;
+	Out.ar(out, sig);
 
-
+}).add
 )
+
+
+
+
+(
+SynthDef(\vinyl, { | out=0, amp= 0.5, rel=0, dur=1, power=1, fade = 0|
+	    var sig;
+	    var adsr = EnvGen.ar(Env.linen(dur,rel,0),doneAction:2);
+		sig = BPF.ar(Dust2.ar(2,0.8)+Dust2.ar(7,0.4)+VarSaw.ar(17,0.2,0.5, power)+Dust2.ar(33,0.1)+Dust2.ar(10,0.05),        600)!2;
+	    sig = FreeVerb.ar(sig * amp, 0.3);
+	    Out.ar(out, XFade2.ar(sig * adsr, LPF.ar(sig * adsr, 600), fade, 1));
+	    sig = sig.tanh;
+}).add
+)
+
+
+.play;
+Ndef(\x,{a=SinOsc.ar(65,Ndef(\x).ar*LFNoise1.ar(0.1,3),LFNoise1.ar(3,6)).tanh;9.do{a=AllpassL.ar(a,0.3,{0.2.rand+0.1}!2,5)};a.tanh}).play
+
+
+
+
