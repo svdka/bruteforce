@@ -23,6 +23,8 @@
 // 2.2. BASS                              (midinote = 42, amp=0.5, clic=0.5)
 // 2.3. BELL                              (freq = 261, tone = 4, art = 1, amp = 0.8, pan = 0)
 // 2.4. S.O.S BELL (Based on D.Stowell)
+// 2.5. PIANO
+// 2.6. (NOT YET) - GRAND PIANO
 
 
 //      /////////////////////////////
@@ -131,12 +133,13 @@ SynthDef(\accelerate, {
 // 2.1. ACCOUSTIC GUITAR
 
 (
-SynthDef(\acc, {arg out=0, freq=440, pan=0, sustain=0.5, amp=0.3;
+SynthDef(\acc, {arg out=0, freq=440, pan=0, sustain=0.5, amp=0.3, reverb=0.3;
 	var pluck, period, string;
 	pluck =  PinkNoise.ar(Decay.kr(Impulse.kr(0.005), 0.05));
 	period = freq.reciprocal;
 	string = CombL.ar(pluck, period, period, sustain*6);
 	string = LeakDC.ar(LPF.ar(Pan2.ar(string, pan), 12000)) * amp;
+	string = FreeVerb.ar(string,reverb, 0.75,0.5, 2);
 	DetectSilence.ar(string, doneAction:2);
 	Out.ar(out, string)
 }).add;
@@ -197,6 +200,50 @@ son = SinOsc.ar(#[2, 3, 4.1, 5.43, 6.8, 8.21] * freq, 0,
 Out.ar(out, Pan2.ar((son + strike + hum) * 4 * amp, pan));
 })).add)
 
+// 2.5 PIANO
+
+(
+SynthDef(\piano, { arg out=0, amp=0.1, pan=0, freq=200, gate=1;
+	var strike, env, noise, pitch, delayTime, detune;
+	var ou, ampEnv;
+
+	strike = Impulse.ar(0.01);
+	env = Decay2.ar(strike, 0.008, 0.04);
+	pitch = freq.cpsmidi;
+
+	ou = Mix.ar(Array.fill(3, { arg i;
+
+		detune = #[-0.02, 0, 0.05, 0.01].at(i);
+		delayTime = 1 / (pitch + detune).midicps;
+
+		noise = LFNoise2.ar(3000, env);
+		CombL.ar(noise, delayTime, delayTime, 999)
+	}));
+	ampEnv= EnvGen.kr(Env.asr(0, 1, 0.2), gate, doneAction:2);
+	ou = Pan2.ar(ou*ampEnv,pan,amp);
+	Out.ar(out, ou);
+}).add;)
+
+// 2.6 GRAND PIANO  (until I figure how to make a real piano...)
+// something like that
+// (
+// SynthDef(\piano, { | i |
+// 	var strike, env, noise, pitch, delayTime, detune;
+//
+// 	strike = Impulse.ar(0.01);
+// 	env = Decay2.ar(strike, 0.008, 0.04);
+// 	pitch = (36 + 54.rand);
+// 	Pan2.ar(
+// 		Mix.ar(Array.fill(3, { arg i;
+// 			detune = #[-0.05, 0, 0.04].at(i);
+// 			delayTime = 1 / (pitch + detune).midicps;
+// 			noise = LFNoise2.ar(3000, env);
+// 		CombL.ar(noise,	delayTime,	delayTime,6)})),
+// 		Out.ar(out, noise ); // spread on stereo field
+// })).add)
+
+
+
 
 
 
@@ -233,18 +280,12 @@ SynthDef(\saw, {| out=0, freq, gate=1, amp=3|
 
 (
 SynthDef(\prophet,{|out= 0 freq = 440 amp = 1.0 gate=1 lforate = 10 lfowidth= 0.5 cutoff= 12000 rq=0.5 pan = 0.0|
-
 	var lfo, pulse, filter, env;
-
 	lfo = LFTri.kr(lforate*[1,1.01],Rand(0,2.0)!2);
-
 	pulse = Pulse.ar(freq*[1,1.01],lfo*lfowidth+0.5);
-
 	filter = RLPF.ar(pulse,cutoff,rq);
-
 	env = EnvGen.ar(Env.adsr(0.01,0.0,1.0,0.5),gate,doneAction:2);
-
-	Out.ar(out,Pan2.ar(Mix(filter)*env*amp*0.5,pan));
+	Out.ar(out,amp* (Pan2.ar(Mix(filter)*env*amp*0.5,pan)));
 
 }).add
 )
