@@ -197,6 +197,12 @@ d.add(\sd_9 ->
 		Buffer.read(s,sf.fullPath);
 	});
 );
+d.add(\full ->
+	PathName("d:/samples/FULL").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
 
 
 )

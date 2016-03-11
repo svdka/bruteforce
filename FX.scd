@@ -1,7 +1,7 @@
 
 // EXEMPLE DE
 
-~verb = {Out.ar(0, FreeVerb.ar(InFeedback.ar(40, 2), 0.5, 0.5, mul:1))}
+~verb = {Out.ar(0, CombL.ar(InFeedback.ar(0, 2), 0.5, 4, mul:2))}
 
 
 // FX
@@ -76,6 +76,7 @@ SynthDef(\reverb, {|out=0, gate=1|
 	Out.ar(0, reverb);
 }).add;
 )
+
 
 ~verb = Pbind(
 	\instrument, \reverb,

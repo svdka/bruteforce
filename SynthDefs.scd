@@ -10,8 +10,9 @@
 // 1.1. READ SOUND FILE                   (rate, amp, pan, pos, rel)
 // 1.2. READ SOUND FILE SINCTRL           (heartrate)
 // 1.3. READ SOUND FILE ACCELERATE        (centerrate, level)
-// 1.4.
-// 1.5.
+// 1.4. (NOT YET) - READ SOUND FILE GRANULATOR
+// 1.5. (NOT YET) - BREAKCORE STYLE SAMPLE LIST READER
+// 1.6. (NOT YET) - DIRECTIONAL SAMPLE READER
 
 
 //      //////////////////////////
@@ -33,6 +34,7 @@
 // 3.3. TECHNOBASS
 // 3.4. DRONE
 // 3.5. DETUNED
+// 3.6. ORGAN (BTR)
 
 
 //      ///////////////////
@@ -101,6 +103,12 @@ SynthDef(\accelerate, {
 }).add;
 )
 
+
+// 1.4. (NOT YET) - READ SOUND FILE GRANULATOR
+// 1.5. (NOT YET) - BREAKCORE STYLE SAMPLE LIST READER
+// 1.6. (NOT YET) - DIRECTIONAL SAMPLE READER
+
+
 // SynthDef(\backwards,
 // 	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
 // 		var sig,env ;
@@ -137,15 +145,15 @@ SynthDef(\acc, {arg out=0, freq=440, pan=0, sustain=0.5, amp=0.3;
 // 2.2. BASS
 
 (
-SynthDef(\bas,
+SynthDef(\bass,
 	{
-		arg amp=0,sus=1,pan=0,freq=0;
+		arg amp=0.5,sus=1,pan=0,freq=0;
 		var osc, env;
 		freq = freq / 4;
 		amp = amp / 3;
 		osc = LFTri.ar(freq, mul:amp) + SinOscFB.ar(freq,mul: amp) + LFSaw.ar(freq, mul: amp);
 		env = EnvGen.ar(Env.perc(0.01, sus),doneAction:2);
-		Out.ar(0,Pan2.ar( osc * env , pan));
+		Out.ar(0,Pan2.ar( (osc * amp)* env , pan));
 		}
 ).add;
 )
@@ -280,6 +288,25 @@ SynthDef.new(\detuned, {
 }).add;
 )
 
+// 4.1. ORGAN
+
+(
+SynthDef(\organ,{|out= 0 freq = 440 amp = 0.1 gate=1 lforate = 10 lfowidth= 0.0 cutoff= 100 rq=0.5 pan=0.0|
+
+	var vibrato, pulse, filter, env;
+
+	vibrato = SinOsc.ar(lforate,Rand(0,2.0));
+
+	pulse = Mix(VarSaw.ar(([1,1.9953843530485,3.0139733629359]*freq)*(1.0+(lfowidth*vibrato)),Rand(0.0,1.0)!3,Rand(0.3,0.5)!3,[1.0,0.7,0.3]))*0.5;
+
+	filter = RLPF.ar(pulse,cutoff,rq);
+
+	env = EnvGen.ar(Env.adsr(0.01,0.5,1.0,0.5),gate,doneAction:2);
+
+	Out.ar(out,Pan2.ar(filter*env*amp,pan));
+
+}).add;
+)
 
 
 
@@ -398,12 +425,12 @@ SynthDef(\harsh, { | out=0, amp=0.1|
 // 5.2. VINYL
 
 (
-SynthDef(\vinyl, { | out=0, amp= 0.5, rel=0, dur=1, power=1, fade = 0|
+SynthDef(\vinyl, { | out=0, amp= 0.5, rel=0, dur=1, power=1, fade = 0, cracks=8, bpfvalue=600|
 	    var sig;
 	    var adsr = EnvGen.ar(Env.linen(dur,rel,0),doneAction:2);
-		sig = BPF.ar(Dust2.ar(2,0.8)+Dust2.ar(7,0.4)+VarSaw.ar(17,0.2,0.5, power)+Dust2.ar(33,0.1)+Dust2.ar(10,0.05),        600)!2;
-	    sig = FreeVerb.ar(sig * amp, 0.3);
-	    Out.ar(out, XFade2.ar(sig * adsr, LPF.ar(sig * adsr, 600), fade, 1));
+		sig = BPF.ar(Dust2.ar(cracks,0.8)+Dust2.ar(cracks,0.4)+VarSaw.ar(17,0.4,0.5, power)+Dust2.ar(cracks/4,0.1)+Dust2.ar(10,0.05),        bpfvalue)!2;
+	    sig = FreeVerb.ar(sig * amp, 0.2, 0.8, 0.5, 2);
+	    Out.ar(out, XFade2.ar(sig * adsr, LPF.ar(sig * adsr, bpfvalue), fade, 1));
 	    sig = sig.tanh;
 }).add
 )
