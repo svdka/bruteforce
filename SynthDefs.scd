@@ -37,6 +37,7 @@
 // 3.4. DRONE
 // 3.5. DETUNED
 // 3.6. ORGAN (BTR)
+// 3.7. ACID (FROM OTOPHILIA)
 
 
 //      ///////////////////
@@ -329,7 +330,8 @@ SynthDef.new(\detuned, {
 }).add;
 )
 
-// 4.1. ORGAN
+
+// 3.6. ORGAN
 
 (
 SynthDef(\organ,{|out= 0 freq = 440 amp = 0.1 gate=1 lforate = 10 lfowidth= 0.0 cutoff= 100 rq=0.5 pan=0.0|
@@ -348,6 +350,39 @@ SynthDef(\organ,{|out= 0 freq = 440 amp = 0.1 gate=1 lforate = 10 lfowidth= 0.0 
 
 }).add;
 )
+
+
+
+// 3.7. ACID FROM OTOPHILIA
+
+	SynthDef("acid", {
+		arg outBus=0, gate=1, pitch=50, amp=0.1;
+		var env1, env2, out;
+		pitch = Lag.kr(pitch, 0.12 * (1-Trig.kr(gate, 0.001)) * gate);
+		env1 = EnvGen.ar(Env.new([0, 1.0, 0, 0], [0.001, 2.0, 0.04], [0, -4, -4], 2), gate, amp);
+		env2 = EnvGen.ar(Env.adsr(0.001, 0.8, 0, 0.8, 70, -4), gate);
+		out = LFPulse.ar(pitch.midicps, 0.0, 0.51, 2, -1);
+
+		out = RLPF.ar(out, (pitch + env2).midicps, 0.3);
+		out = out * env1;
+
+		Out.ar(outBus, out.dup);
+	}).send(s);
+
+	SynthDef("fx", {
+		arg outBus=0, gate=0;
+		var out;
+
+		out = In.ar(outBus, 2);
+		out = FreeVerb2.ar( BPF.ar(out[0], 3500, 1.5), BPF.ar(out[1], 3500, 1.5), 1.0, 0.95, 0.15) * EnvGen.kr(Env.new([0.02, 0.3, 0.02], [0.4, 0.01], [3, -4], 1), 1-Trig.kr(gate, 0.01)) + out;
+		out = HPF.ar(out * 1.2, 40);
+		out = Limiter.ar(out, 1.0, 0.02);
+
+		ReplaceOut.ar(outBus, out);
+	}).send(s);
+);
+
+
 
 
 
