@@ -10,7 +10,7 @@
 // 1.1. READ SOUND FILE                   (rate, amp, pan, pos, rel)
 // 1.2. READ SOUND FILE SINCTRL           (heartrate)
 // 1.3. READ SOUND FILE ACCELERATE        (centerrate, level)
-// 1.4. (NOT YET) - READ SOUND FILE GRANULATOR
+// 1.4. READ SOUND FILE GRANULATOR & DIRECTIONAL (rate)
 // 1.5. (NOT YET) - BREAKCORE STYLE SAMPLE LIST READER
 // 1.6. (NOT YET) - DIRECTIONAL SAMPLE READER
 
@@ -25,6 +25,7 @@
 // 2.4. S.O.S BELL (Based on D.Stowell)
 // 2.5. PIANO
 // 2.6. (NOT YET) - GRAND PIANO
+// 2.7. ELECTRIC GUITAR
 
 
 //      /////////////////////////////
@@ -106,23 +107,28 @@ SynthDef(\accelerate, {
 }).add;
 )
 
+// 1.4. READ SOUND FILE GRANULATOR
+(
+SynthDef(\granular, {|out=0, buf, rate=1.0, sPos=0.1, attack=0.01, release=0.2, filterFreq=220, bwr=0.5, delPan=0.02|
+	var trigger, sig, pan, env;
+	env = EnvGen.kr(Env.perc(attack, release, 1, -4), doneAction:2);
+	sig = LPF.ar(RHPF.ar(
+		PlayBuf.ar(numChannels:buf.numChannels,
+			bufnum:buf,
+			rate:rate,
+			trigger:0,
+			startPos:sPos * BufFrames.kr(buf),
+			loop:0, doneAction:2),
+		filterFreq, bwr), 3000, 1);
+	OffsetOut.ar(out,[DelayC.ar(sig,0.01,0.01), DelayC.ar(sig,0.02, delPan)]);
+}).add;
+)
 
-// 1.4. (NOT YET) - READ SOUND FILE GRANULATOR
+=
 // 1.5. (NOT YET) - BREAKCORE STYLE SAMPLE LIST READER
-// 1.6. (NOT YET) - DIRECTIONAL SAMPLE READER
 
 
-// SynthDef(\backwards,
-// 	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
-// 		var sig,env ;
-// 		sig = Pan2.ar(PlayBuf.ar(1,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:2),pan);
-// 		env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:2);
-// 		sig = sig * env;
-// 		sig = sig * amp;
-// 		Out.ar(out,sig);
-// }).add;
 
-//  {var rate= [1, -1].choose.postln; PlayBuf.ar(~buffer.numChannels, ~buffer.bufnum, rate, startPos: ~buffer.numFrames-2*(rate<0).binaryValue, doneAction:2)}.play;
 
 
 
@@ -242,6 +248,17 @@ SynthDef(\piano, { arg out=0, amp=0.1, pan=0, freq=200, gate=1;
 // 		CombL.ar(noise,	delayTime,	delayTime,6)})),
 // 		Out.ar(out, noise ); // spread on stereo field
 // })).add)
+
+
+(
+SynthDef(\electric, { arg out=0, amp=0.1, pan=0,gate=1, rel= 0.3, saw=12;
+	var sig =  Saw.ar(12)*266666+CuspN.ar(100, 0.1)*0.00001;
+	var sig2 = LFNoise0.ar(1/2).lag+2/[2.02,3]/99++9;
+	var sig3 = BPF.ar(sig, 440, 4);
+	var env =  EnvGen.ar(Env.linen(0.0,rel,0),doneAction:2);
+	sig3 =     FreeVerb.ar(CombN.ar(sig3, 1, sig2,9),0.25);
+	sig3 =     sig3.sum.tanh!2;
+	Out.ar(out, (sig3 * amp) * env);}).add;)
 
 
 
