@@ -90,7 +90,7 @@ d.add(\oh_8 ->
 d.add(\rs_8 ->
 	PathName("d:/samples/RS_8").entries.collect({
 		arg sf;
-		Buffer.read(s,sf.fullPath)_8;
+		Buffer.read(s,sf.fullPath);
 	});
 );
 d.add(\sd_8 ->
