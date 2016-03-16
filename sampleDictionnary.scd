@@ -203,8 +203,12 @@ d.add(\full ->
 		Buffer.read(s,sf.fullPath);
 	});
 );
-
-
+d.add(\greets ->
+	PathName("d:/samples/GREETINGS").entries.collect({
+		arg sf;
+		Buffer.read(s,sf.fullPath);
+	});
+);
 )
 
 
