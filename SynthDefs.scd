@@ -11,7 +11,7 @@
 // 1.2. READ SOUND FILE SINCTRL           (heartrate)
 // 1.3. READ SOUND FILE ACCELERATE        (centerrate, level)
 // 1.4. READ SOUND FILE GRANULATOR & DIRECTIONAL (rate)
-// 1.5. (NOT YET) - BREAKCORE STYLE SAMPLE LIST READER
+// 1.5. BREAKCORE STYLE SAMPLE LIST READER
 // 1.6. (NOT YET) - DIRECTIONAL SAMPLE READER
 
 
@@ -39,6 +39,7 @@
 // 3.5. DETUNED
 // 3.6. ORGAN (BTR)
 // 3.7. ACID (FROM OTOPHILIA)
+// 3.8. SIMPLE PAD
 
 
 //      ///////////////////
@@ -124,7 +125,61 @@ SynthDef(\granular, {|out=0, buf, rate=1.0, sPos=0.1, attack=0.01, release=0.2, 
 }).add;
 )
 
-=
+
+// 1.5. BREAKCORE STYLE SAMPLE LIST READER
+
+SynthDef(\space,
+	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
+		var sig,env ;
+		rate = LFNoise0.ar(10, 1);
+		sig = Pan2.ar(PlayBuf.ar(1,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:2),pan);
+		env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:2);
+		sig = sig * env;
+		sig = FreeVerb.ar(sig * amp, 0.5,0.5);
+		sig = CombC.ar(sig);
+		Out.ar(out,sig);
+}).add;
+
+
+
+// (
+// SynthDef(\funnyreader, {|out=0, buf, rate=1.0, sPos=0.1, attack=0.01, release=0.2, filterFreq=220, bwr=0.5, delPan=0.02|
+// 	var trigger, sig, pan, env;
+// 	env = EnvGen.kr(Env.perc(attack, release, 1, -4), doneAction:2);
+// 	sig = LPF.ar(RHPF.ar(
+// 		PlayBuf.ar(numChannels:buf.numChannels,
+// 			bufnum:buf,
+// 			rate:rate,
+// 			trigger:0,
+// 			startPos:sPos * BufFrames.kr(buf),
+// 		loop:0, doneAction:2),
+// 	filterFreq, bwr), 3000, 1);
+// 	OffsetOut.ar(out,[DelayC.ar(sig,0.01,0.01), DelayC.ar(sig,0.02, delPan)]);
+// }).add;
+// )
+//
+//
+//
+// {
+// 	t = Impulse.kr( 5 );
+// 	PlayBuf.ar(
+// 		1,
+// 		b,
+// 		1,
+// 		t,
+// 		Demand.kr(
+// 			t,
+// 			0,
+// 			Dseq(
+// 				1e3 * [ 103, 41, 162, 15, 141, 52, 124, 190 ],
+// 				4
+// 			)
+// 		)
+// 	) ! 2
+// }
+//
+
+
 // 1.5. (NOT YET) - BREAKCORE STYLE SAMPLE LIST READER
 
 
@@ -399,6 +454,15 @@ SynthDef(\organ,{|out= 0 freq = 440 amp = 0.1 gate=1 lforate = 10 lfowidth= 0.0 
 	}).send(s);
 );
 
+// 3.8 SIMPLE PAD
+
+(
+SynthDef(\pad, { |out, freqScale=1, sustain=1, amp=0.1, saw=1|
+	var snd = Klang.ar(`[ Array.exprand(24, 100, 1000), 0.05, nil ], freqScale)!2;
+	snd = snd * EnvGen.ar(Env.sine(sustain), doneAction:2);
+	OffsetOut.ar(out, snd * amp)
+}).add;
+);
 
 
 
@@ -528,9 +592,10 @@ SynthDef(\vinyl, { | out=0, amp= 0.5, rel=0, dur=1, power=1, fade = 0, cracks=8,
 }).add
 )
 
+// 5.3. HEAVY
 
-.play;
-Ndef(\x,{a=SinOsc.ar(65,Ndef(\x).ar*LFNoise1.ar(0.1,3),LFNoise1.ar(3,6)).tanh;9.do{a=AllpassL.ar(a,0.3,{0.2.rand+0.1}!2,5)};a.tanh}).play
+Ndef(\heavy,{a=SinOsc.ar(65,Ndef(\heavy).ar*LFNoise1.ar(0.5,1),LFNoise1.ar(3,6)).tanh;9.do{a=AllpassL.ar(a,0.3,{0.4.rand+0.1}!2,5)};a.tanh}).play
+
 
 
 
