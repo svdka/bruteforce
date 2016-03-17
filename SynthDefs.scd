@@ -17,7 +17,8 @@
 //      //////////////////////////
 //
 // 2.1. ACCOUSTIC GUITAR
-// 2.2. BASS                              (midinote = 42, amp=0.5, clic=0.5)
+// 2.2. DAF_BASS
+// 2.3. FILTER BASS
 // 2.3. BELL                              (freq = 261, tone = 4, art = 1, amp = 0.8, pan = 0)
 // 2.4. S.O.S BELL (Based on D.Stowell)
 // 2.5. PIANO
@@ -139,21 +140,39 @@ SynthDef(\accoustic, {arg out=0, freq=440, pan=0, sustain=0.5, amp=0.3, reverb=0
 }).add;
 )
 
-// 2.2. BASS
+// 2.2. DAF_BASS
 
-(
-SynthDef(\bass,
-	{
-		arg amp=0.5,sus=1,pan=0,freq=0;
-		var osc, env;
-		freq = freq / 4;
-		amp = amp / 3;
-		osc = LFTri.ar(freq, mul:amp) + SinOscFB.ar(freq,mul: amp) + LFSaw.ar(freq, mul: amp);
-		env = EnvGen.ar(Env.perc(0.01, sus),doneAction:2);
-		Out.ar(0,Pan2.ar( (osc * amp)* env , pan));
-		}
-).add;
-)
+SynthDef(\daf_bass,{ |out, freq=440, sustain=1, gate=1, amp=0.1|
+	var snd, env, fenv, harm;
+
+	harm = [1,1.01,2,2.02,3.5,4.01,5.501];
+	harm = harm ++ (harm*2);
+
+	snd = SinOsc.ar(freq*harm).sum.distort.squared * 6;
+	snd = snd + SinOsc.ar(freq / [1, 2]).sum!2;
+
+	fenv = EnvGen.kr(Env.adsr(0.075,0.05,0.1,0.25));
+
+	snd = RLPF.ar(snd, fenv.range(freq*2, freq*8), 0.75, 2) + (snd * 0.25);
+	env = EnvGen.kr(Env.adsr(0.001,0.2,0.9,0.25), gate, amp, doneAction:2);
+
+	snd = LeakDC.ar(Limiter.ar(snd * env));
+	OffsetOut.ar(out, (snd!2));
+}).add;
+
+// 2.3. FITLERED BASS
+SynthDef(\bass_filtered,{ |out, freq=440, sustain=1, gate=1, amp=0.1|
+	var snd, env, fenv, harm;
+	harm = [1, 2.0, 2.01];
+	snd = FreeVerb.ar(Saw.ar(freq*harm,mul:0.1).sum);
+	snd = snd + SinOsc.ar(freq, mul:0.5);
+	env = EnvGen.kr(Env.adsr(0.001,0.8,0.7,0.25), gate, 2, doneAction:2);
+	fenv = EnvGen.kr(Env.adsr(1.0,0.8,0.75,0.8),gate,freq*35,freq/2);
+	snd = RLPF.ar(snd, fenv, 0.2).softclip * env * amp * 5;
+
+	OffsetOut.ar(out, (snd!2));
+}).add;
+
 
 // 2.3. Phase Modulated Bell
 
@@ -439,7 +458,7 @@ SynthDef(\snare, {arg out = 0, amp = 1, att = 0.01, rel = 0.2, freq = 180, pan =
 
 	Out.ar(out, sum);
 
-}).play;
+}).add;
 
 
 // 4.3. HH
