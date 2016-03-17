@@ -10,10 +10,7 @@
 // 1.1. READ SOUND FILE                   (rate, amp, pan, pos, rel)
 // 1.2. READ SOUND FILE SINCTRL           (heartrate)
 // 1.3. READ SOUND FILE ACCELERATE        (centerrate, level)
-// 1.4. READ SOUND FILE GRANULATOR & DIRECTIONAL (rate)
-// 1.5. BREAKCORE STYLE SAMPLE LIST READER
-// 1.6. (NOT YET) - DIRECTIONAL SAMPLE READER
-
+// 1.4. READ SOUND FILE GRANULATOR DIRECTIONAL (rate)
 
 //      //////////////////////////
 //      //2. CLASSIC INSTRUMENTS//
@@ -25,8 +22,6 @@
 // 2.4. S.O.S BELL (Based on D.Stowell)
 // 2.5. PIANO
 // 2.6. (NOT YET) - GRAND PIANO
-// 2.7. ELECTRIC GUITAR
-
 
 //      /////////////////////////////
 //      //3. ELECTRONIC INSTRUMENTS//
@@ -46,17 +41,16 @@
 //      // 4. DRUM SYNTHS//
 //      ///////////////////
 //
-// 4.1  KICK
-// 4.2  CLAP
-// 4.3  HH
+// 4.1   KICK
+// 4.2   SNARES
+// 4.3   HIHAT
 
 
 //      ////////////
 //      // 5. MISC//
 //      ////////////
 //
-// 5.1. HARSH
-// 5.2. VINYL                             (fade : crossfade between cracks & "beat", power : beat level)
+// 5.1. VINYL                     (fade : crossfade between cracks & "beat", power : beat level)
 
 
 
@@ -67,6 +61,7 @@
 //
 // 1.1 READ SOUND FILE
 
+// TO DO : add frequency shift
 SynthDef(\readsf,
 	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
 		var sig,env ;
@@ -93,7 +88,7 @@ SynthDef(\readsfsin,
 
 // 1.3 READ SOUND FILE WITH ACCELERATED READING
 // (based on code "Risset rhythm by snappizz")
-
+// to do : simplify args
 (
 SynthDef(\accelerate, {
     |out = 0, buf, megabardur = 3.0, bufdur = 3.0, level = 0, bandwidth = 1, centerrate = 1, dir = 1, amp = 0.5|
@@ -125,69 +120,6 @@ SynthDef(\granular, {|out=0, buf, rate=1.0, sPos=0.1, attack=0.01, release=0.2, 
 }).add;
 )
 
-
-// 1.5. BREAKCORE STYLE SAMPLE LIST READER
-
-SynthDef(\space,
-	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
-		var sig,env ;
-		rate = LFNoise0.ar(10, 1);
-		sig = Pan2.ar(PlayBuf.ar(1,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:2),pan);
-		env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:2);
-		sig = sig * env;
-		sig = FreeVerb.ar(sig * amp, 0.5,0.5);
-		sig = CombC.ar(sig);
-		Out.ar(out,sig);
-}).add;
-
-
-
-// (
-// SynthDef(\funnyreader, {|out=0, buf, rate=1.0, sPos=0.1, attack=0.01, release=0.2, filterFreq=220, bwr=0.5, delPan=0.02|
-// 	var trigger, sig, pan, env;
-// 	env = EnvGen.kr(Env.perc(attack, release, 1, -4), doneAction:2);
-// 	sig = LPF.ar(RHPF.ar(
-// 		PlayBuf.ar(numChannels:buf.numChannels,
-// 			bufnum:buf,
-// 			rate:rate,
-// 			trigger:0,
-// 			startPos:sPos * BufFrames.kr(buf),
-// 		loop:0, doneAction:2),
-// 	filterFreq, bwr), 3000, 1);
-// 	OffsetOut.ar(out,[DelayC.ar(sig,0.01,0.01), DelayC.ar(sig,0.02, delPan)]);
-// }).add;
-// )
-//
-//
-//
-// {
-// 	t = Impulse.kr( 5 );
-// 	PlayBuf.ar(
-// 		1,
-// 		b,
-// 		1,
-// 		t,
-// 		Demand.kr(
-// 			t,
-// 			0,
-// 			Dseq(
-// 				1e3 * [ 103, 41, 162, 15, 141, 52, 124, 190 ],
-// 				4
-// 			)
-// 		)
-// 	) ! 2
-// }
-//
-
-
-// 1.5. (NOT YET) - BREAKCORE STYLE SAMPLE LIST READER
-
-
-
-
-
-
-
 //      //////////////////////////
 //      //2. CLASSIC INSTRUMENTS//
 //      //////////////////////////
@@ -195,7 +127,7 @@ SynthDef(\space,
 // 2.1. ACCOUSTIC GUITAR
 
 (
-SynthDef(\acc, {arg out=0, freq=440, pan=0, sustain=0.5, amp=0.3, reverb=0.3;
+SynthDef(\accoustic, {arg out=0, freq=440, pan=0, sustain=0.5, amp=0.3, reverb=0.3;
 	var pluck, period, string;
 	pluck =  PinkNoise.ar(Decay.kr(Impulse.kr(0.005), 0.05));
 	period = freq.reciprocal;
@@ -286,23 +218,22 @@ SynthDef(\piano, { arg out=0, amp=0.1, pan=0, freq=200, gate=1;
 	Out.ar(out, ou);
 }).add;)
 
-// 2.6 GRAND PIANO  (until I figure how to make a real piano...)
-// something like that
+// 2.6 GRAND PIANO
 // (
-// SynthDef(\piano, { | i |
+// SynthDef(\wip_piano, { | i |
 // 	var strike, env, noise, pitch, delayTime, detune;
 //
 // 	strike = Impulse.ar(0.01);
 // 	env = Decay2.ar(strike, 0.008, 0.04);
+//
+// 	detune = #[-0.05, 0, 0.04].at(1);
+// 	delayTime = 1 / (pitch + detune).midicps;
+// 	noise = LFNoise2.ar(3000, env);
 // 	pitch = (36 + 54.rand);
-// 	Pan2.ar(
-// 		Mix.ar(Array.fill(3, { arg i;
-// 			detune = #[-0.05, 0, 0.04].at(i);
-// 			delayTime = 1 / (pitch + detune).midicps;
-// 			noise = LFNoise2.ar(3000, env);
-// 		CombL.ar(noise,	delayTime,	delayTime,6)})),
-// 		Out.ar(out, noise ); // spread on stereo field
-// })).add)
+//
+// 	var sig = Pan2.ar(Mix.ar(Array.fill(3,CombL.ar(noise,delayTime,delayTime,6))));
+// 	sig = Out.ar(out, sig); // spread on stereo field
+// }).play)
 
 
 (
@@ -314,10 +245,6 @@ SynthDef(\electric, { arg out=0, amp=0.1, pan=0,gate=1, rel= 0.3, saw=12;
 	sig3 =     FreeVerb.ar(CombN.ar(sig3, 1, sig2,9),0.25);
 	sig3 =     sig3.sum.tanh!2;
 	Out.ar(out, (sig3 * amp) * env);}).add;)
-
-
-
-
 
 
 //      /////////////////////////////
@@ -426,7 +353,7 @@ SynthDef(\organ,{|out= 0 freq = 440 amp = 0.1 gate=1 lforate = 10 lfowidth= 0.0 
 
 
 // 3.7. ACID FROM OTOPHILIA
-
+(
 	SynthDef("acid", {
 		arg outBus=0, gate=1, pitch=50, amp=0.1;
 		var env1, env2, out;
@@ -439,7 +366,7 @@ SynthDef(\organ,{|out= 0 freq = 440 amp = 0.1 gate=1 lforate = 10 lfowidth= 0.0 
 		out = out * env1;
 
 		Out.ar(outBus, out.dup);
-	}).send(s);
+	}).add(s);
 
 	SynthDef("fx", {
 		arg outBus=0, gate=0;
@@ -451,8 +378,8 @@ SynthDef(\organ,{|out= 0 freq = 440 amp = 0.1 gate=1 lforate = 10 lfowidth= 0.0 
 		out = Limiter.ar(out, 1.0, 0.02);
 
 		ReplaceOut.ar(outBus, out);
-	}).send(s);
-);
+	}).play;
+)
 
 // 3.8 SIMPLE PAD
 
@@ -461,7 +388,7 @@ SynthDef(\pad, { |out, freqScale=1, sustain=1, amp=0.1, saw=1|
 	var snd = Klang.ar(`[ Array.exprand(24, 100, 1000), 0.05, nil ], freqScale)!2;
 	snd = snd * EnvGen.ar(Env.sine(sustain), doneAction:2);
 	OffsetOut.ar(out, snd * amp)
-}).add;
+}).play;
 );
 
 
@@ -473,74 +400,55 @@ SynthDef(\pad, { |out, freqScale=1, sustain=1, amp=0.1, saw=1|
 //
 // 4.1. KICK
 
-(
-SynthDef(\kick, {
-	arg out=0, amp=0.1, pan=0;
-	var env0, env1, env1m, son;
+SynthDef(\kick_ss, {arg out = 0, amp = 1, att = 0.01, rel = 0.2, freq = 180, pan = 0, sinAmp=1.4, sinValue=180;
 
-	env0 =  EnvGen.ar(Env.new([0.5, 0.5, 0.5, 0], [0.005, 0.06, 0.26], [-4, -2, -4]), doneAction:2);
-	env1 =  EnvGen.ar(Env.new([110, 59, 29], [0.005, 0.29], [-4, -5]));
-	env1m = env1.midicps;
 
-	son = LFPulse.ar(env1m, 0, 0.5, 2, -0.5);
-	son = son + WhiteNoise.ar(2);
-	son = LPF.ar(son, env1m*1.5, env0);
-	son = son + SinOsc.ar(env1m, 0.5, env0);
+	var env  = EnvGen.kr(Env.perc(0.001, 0.1, 4, -4));
+	var env2 = EnvGen.kr(Env.perc(0.001, 1,   1, -4), doneAction: 2);
+	var sumenv = env + env2;
 
-	son = FreeVerb.ar(son * 1.2, 0.2, 0.5);
-	son = son.clip2(1);
+	var snd1 = SinOsc.ar((sumenv*74),0,1);
+	var snd2 = SinOsc.ar((sumenv*53),0,1);
+	var snd = (snd1 + snd2) * sumenv;
 
-	Out.ar(out, Pan2.ar(son * amp));
-},
-).add
-)
+	var noise = LPF.ar(WhiteNoise.ar(env), 1000);
+	var sig =   LPF.ar(snd + noise, 50);
 
-// 4.1. KICK (2) (based on grirgz)
+	sig = sig.tanh;
 
-(
-SynthDef(\kick2, { |out=0, amp=0.1, pan=0, fratio=1.5, freqpan=0.01, spread=0.08, timeScale=1|
-	var env0, env1, env1m, son;
+	Out.ar(out, sig * amp);
 
-	//freqpan = [-1,0,1] * freqpan;
-	env0 = \env0.kr(Env.new([0, 1, 0.5, 0], [0.105, 0.16, 00.2], [-4, -2, -4]));
-	env1 = \env1.kr(Env.new([110, 32, 29], [0.105, 0.29], [-4, -5]));
-
-	env0 =  EnvGen.ar(env0, doneAction:2, timeScale:timeScale);
-	env1 = EnvGen.ar(env1, timeScale:timeScale);
-	env1m = env1.midicps;
-
-	son = LFPulse.ar(env1m * freqpan, 0, 0.5, 1, -0.5);
-	son = son + WhiteNoise.ar(1);
-	son = LPF.ar(son, env1m*fratio);
-	son = son + SinOsc.ar(env1m, 0.5);
-	son = LPF.ar(son, \lpf.kr(2000));
-
-	son = son * 1.2;
-	son = son.clip2(1);
-
-	son = son * amp;
-	son = son * env0;
-	son = Pan2.ar(son, pan, amp);
-
-	Out.ar(out, son);
-}).add)
-
-// 4.2. SNARE
-
-SynthDef(\snare, {arg out = 0, amp = 0.1, sinfreq = 180, att = 0.01, rel = 0.2, ffreq = 2000, pan = 0;
-	var snd1 = WhiteNoise.ar(amp);
-	var snd2 = SinOsc.ar(sinfreq,0,amp);
-	var env = EnvGen.kr(Env.perc(att, rel), doneAction: 2);
-	var sum = HPF.ar(snd1 * env, ffreq)+(snd2*env);
-	Out.ar(out, Pan2.ar(sum, pan));
 }).add;
+
+// 4.2.  SNARES
+
+SynthDef(\snare, {arg out = 0, amp = 1, att = 0.01, rel = 0.2, freq = 180, pan = 0, sinAmp=1.4, sinValue=180;
+
+	var snd1 = SinOsc.ar(180,0,sinAmp);
+	var snd2 = SinOsc.ar(300,0,sinAmp);
+
+	var noise = LPF.ar(WhiteNoise.ar(1), 500);
+
+	var env = EnvGen.kr(Env.perc(0.005, 0.25), doneAction: 2);
+	var env2= EnvGen.kr(Env.perc(0.001, 0.1));
+    var sumenv = env + env2;
+
+	var sum = (snd1 + snd2) * sumenv + (noise * sumenv);
+	sum = BPF.ar(sum, 1500, 2);
+	sum = sum.tanh;
+
+	Out.ar(out, sum);
+
+}).play;
+
 
 // 4.3. HH
 
 SynthDef(\hihat, {arg out = 0, amp = 0.5, att = 0.01, rel = 0.2, ffreq = 6000, pan = 0;
 	var snd = WhiteNoise.ar(amp);
 	var env = Env.perc(att, rel).kr(doneAction: 2);
-	snd = HPF.ar(snd * env, ffreq);
+	snd = HPF.ar(snd * env, ffreq + VarSaw.ar(2, 0, 0.5, 6000));
+	snd = Decay.ar(snd, 0.6);
 	Out.ar(out, Pan2.ar(snd, pan));
 }).add;
 
@@ -551,35 +459,8 @@ SynthDef(\hihat, {arg out = 0, amp = 0.5, att = 0.01, rel = 0.2, ffreq = 6000, p
 //      // 5. MISC//
 //      ////////////
 //
-// 5.1. HARSH
 
-(
-SynthDef(\harsh, { | out=0, amp=0.1|
-	var sig, c, d, n, e, f;
-
-	c = SinOsc.ar(20) * Env.perc(0.01,0.2).ar(0, TDuty.ar(Dseq([1/4,1/2,1/8,1/8],inf)));
-	5.do{ c = (c.distort + c)*0.75};
-	c = c * 4;
-	d = LPF.ar(Saw.ar([20,47]).sum , XLine.ar(1000,200,0.5)) * Env.perc.ar(0, Impulse.ar(1/16)) * 0.5;
-	d = (GVerb.ar( d , roomsize:10, revtime:6) * 200).clip(-1.0,1.0) * 0.3;
-	n = 12;
-	e = ( Saw.ar( 40*(1..n) * ({ LFNoise1.ar(0.1).range(1,1.01) } ! n) ) *
-		({ LFNoise1.ar(0.1).range(0.0,1.0) }!n)).sum * 60;
-	e = CombC.ar(e, 0.1, 0.1, 4) + e;
-	e = e.tanh * 0.3 * SinOsc.ar(0.05).range(0.5,1.0);
-	e = e.dup;
-	e = e * SinOsc.ar(0.01).range(0.2,1.0) * 0.5;
-	f = Blip.ar(100) * Blip.ar(100) * Env([0.0,0.0,1.0],[8,8],[\step,\linear,\step])
-	.ar(0, Impulse.ar(1/32)) * 2 ;
-	sig = (( c + f) ! 2) + d + e;
-	sig = sig.tanh * 0.5;
-	sig = sig * amp;
-	Out.ar(out, sig);
-
-}).add
-)
-
-// 5.2. VINYL
+// 5.1. VINYL
 
 (
 SynthDef(\vinyl, { | out=0, amp= 0.5, rel=0, dur=1, power=1, fade = 0, cracks=8, bpfvalue=600|
@@ -591,11 +472,6 @@ SynthDef(\vinyl, { | out=0, amp= 0.5, rel=0, dur=1, power=1, fade = 0, cracks=8,
 	    sig = sig.tanh;
 }).add
 )
-
-// 5.3. HEAVY
-
-Ndef(\heavy,{a=SinOsc.ar(65,Ndef(\heavy).ar*LFNoise1.ar(0.5,1),LFNoise1.ar(3,6)).tanh;9.do{a=AllpassL.ar(a,0.3,{0.4.rand+0.1}!2,5)};a.tanh}).play
-
 
 
 
