@@ -268,7 +268,7 @@ var volamp = EnvGen.ar(Env.perc(0.01, 1000/freq, 1/freq));
 	snd = snd * amp;
 	Out.ar(out, snd) ;
 }
-).add
+).add;
 
 
 // 2.6 GRAND PIANO
