@@ -22,7 +22,7 @@
 // 2.3. BELL                              (freq = 261, tone = 4, art = 1, amp = 0.8, pan = 0)
 // 2.4. S.O.S BELL (Based on D.Stowell)
 // 2.5. PIANO
-// 2.6. (NOT YET) - GRAND PIANO
+// 2.6. SOUND AND SOUND PIANO
 
 //      /////////////////////////////
 //      //3. ELECTRONIC INSTRUMENTS//
@@ -143,7 +143,7 @@ SynthDef(\accoustic, {arg out=0, freq=440, pan=0, sustain=0.5, amp=0.3, reverb=0
 
 // 2.2. DAF_BASS
 
-SynthDef(\daf_bass,{ |out, freq=440, sustain=1, gate=1, amp=0.1|
+SynthDef(\daf_bass,{ |out, freq=440, sustain=1, gate=1, amp=0.5|
 	var snd, env, fenv, harm;
 
 	harm = [1,1.01,2,2.02,3.5,4.01,5.501];
@@ -238,6 +238,38 @@ SynthDef(\piano, { arg out=0, amp=0.1, pan=0, freq=200, gate=1;
 	ou = Pan2.ar(ou*ampEnv,pan,amp);
 	Out.ar(out, ou);
 }).add;
+
+
+// 2.6 SOUND ON SOUND PIANO
+
+SynthDef(\piano_ss,{ | out=0, amp=1, trigger=1,punch=0.5,freq=440|
+// HIGHER PART
+
+var osc1 = SinOsc.ar(freq,0, 4).midicps;
+var osc2 = SinOsc.ar(freq*0.99, 0, 4).midicps;
+var osc3 = SinOsc.ar(freq*1.01, 0, 4).midicps;
+var mixer = osc1 + osc2 + osc3;
+var adsr = 	EnvGen.ar(Env.adsr( punch , 1 , 0 , 1));
+var sig = mixer * adsr;
+
+// LOWER PART
+var osc4 = SinOsc.ar(freq, 0, 4);
+var osc5 = SinOsc.ar(freq, 0, 4);
+var mixer2 = osc4 + osc5;
+var adsr2 = EnvGen.ar(Env.perc(punch, 1),doneAction:2);
+var sig2  = mixer2 * adsr2;
+
+// ADD STUFF UP
+var	cutoff = EnvGen.ar(Env.perc(punch, freq));
+var snd = sig + sig2;
+var volamp = EnvGen.ar(Env.perc(0.01, 1000/freq, 1/freq));
+    snd = LPF.ar(snd, cutoff + freq);
+    snd = snd * volamp;
+	snd = snd * amp;
+	Out.ar(out, snd) ;
+}
+).add
+
 
 // 2.6 GRAND PIANO
 // (
