@@ -87,10 +87,11 @@ SynthDef(\readsfsin,
 		Out.ar(out,sig);
 }).add;
 
+
 // 1.3 READ SOUND FILE WITH ACCELERATED READING
 // (based on code "Risset rhythm by snappizz")
 // to do : simplify args
-(
+
 SynthDef(\accelerate, {
     |out = 0, buf, megabardur = 3.0, bufdur = 3.0, level = 0, bandwidth = 1, centerrate = 1, dir = 1, amp = 0.5|
     var t, rate, snd, power;
@@ -102,10 +103,10 @@ SynthDef(\accelerate, {
 	snd = snd * amp;
     Out.ar(out,amp * snd.tanh);
 }).add;
-)
+
 
 // 1.4. READ SOUND FILE GRANULATOR
-(
+
 SynthDef(\granular, {|out=0, buf, rate=1.0, sPos=0.1, attack=0.01, release=0.2, filterFreq=220, bwr=0.5, delPan=0.02|
 	var trigger, sig, pan, env;
 	env = EnvGen.kr(Env.perc(attack, release, 1, -4), doneAction:2);
@@ -119,7 +120,7 @@ SynthDef(\granular, {|out=0, buf, rate=1.0, sPos=0.1, attack=0.01, release=0.2, 
 		filterFreq, bwr), 3000, 1);
 	OffsetOut.ar(out,[DelayC.ar(sig,0.01,0.01), DelayC.ar(sig,0.02, delPan)]);
 }).add;
-)
+
 
 //      //////////////////////////
 //      //2. CLASSIC INSTRUMENTS//
@@ -127,7 +128,7 @@ SynthDef(\granular, {|out=0, buf, rate=1.0, sPos=0.1, attack=0.01, release=0.2, 
 //
 // 2.1. ACCOUSTIC GUITAR
 
-(
+
 SynthDef(\accoustic, {arg out=0, freq=440, pan=0, sustain=0.5, amp=0.3, reverb=0.3;
 	var pluck, period, string;
 	pluck =  PinkNoise.ar(Decay.kr(Impulse.kr(0.005), 0.05));
@@ -138,7 +139,7 @@ SynthDef(\accoustic, {arg out=0, freq=440, pan=0, sustain=0.5, amp=0.3, reverb=0
 	DetectSilence.ar(string, doneAction:2);
 	Out.ar(out, string)
 }).add;
-)
+
 
 // 2.2. DAF_BASS
 
@@ -161,6 +162,7 @@ SynthDef(\daf_bass,{ |out, freq=440, sustain=1, gate=1, amp=0.1|
 }).add;
 
 // 2.3. FITLERED BASS
+
 SynthDef(\bass_filtered,{ |out, freq=440, sustain=1, gate=1, amp=0.1|
 	var snd, env, fenv, harm;
 	harm = [1, 2.0, 2.01];
@@ -176,7 +178,7 @@ SynthDef(\bass_filtered,{ |out, freq=440, sustain=1, gate=1, amp=0.1|
 
 // 2.3. Phase Modulated Bell
 
-(
+
 SynthDef(\pbell, {
 arg out = 0, freq = 261, tone = 4, art = 1, amp = 0.8, pan = 0;
 var env, mod, sig;
@@ -190,12 +192,12 @@ sig = sig * EnvGen.kr(env, timeScale: 1.3*art,
 	levelScale: Rand(0.1, 0.5), doneAction:2);
 Out.ar(out, sig*amp);
 }).add;
-)
+
 
 // 2.4. SOS Bell (Based on Dan Stowell Version)
 
-(
-(
+
+
 SynthDef(\sos_bell, { |freq=440, out=0, amp=0.1, pan=0|
 var son, strike, hum;
 // Stretched harmonic series
@@ -211,11 +213,11 @@ son = SinOsc.ar(#[2, 3, 4.1, 5.43, 6.8, 8.21] * freq, 0,
 	        hum = SinOsc.ar([freq*[1.01,0.5], freq*0.47], 0, //added sin value 0.5
 		    EnvGen.ar(Env.new([0,0.05,0.05,0], [0.5,0.5,1]), doneAction:2)).mean;
 Out.ar(out, Pan2.ar((son + strike + hum) * 4 * amp, pan));
-})).add)
+}).add;
 
 // 2.5 PIANO
 
-(
+
 SynthDef(\piano, { arg out=0, amp=0.1, pan=0, freq=200, gate=1;
 	var strike, env, noise, pitch, delayTime, detune;
 	var ou, ampEnv;
@@ -235,7 +237,7 @@ SynthDef(\piano, { arg out=0, amp=0.1, pan=0, freq=200, gate=1;
 	ampEnv= EnvGen.kr(Env.asr(0, 1, 0.2), gate, doneAction:2);
 	ou = Pan2.ar(ou*ampEnv,pan,amp);
 	Out.ar(out, ou);
-}).add;)
+}).add;
 
 // 2.6 GRAND PIANO
 // (
@@ -255,7 +257,7 @@ SynthDef(\piano, { arg out=0, amp=0.1, pan=0, freq=200, gate=1;
 // }).play)
 
 
-(
+
 SynthDef(\electric, { arg out=0, amp=0.1, pan=0,gate=1, rel= 0.3, saw=12;
 	var sig =  Saw.ar(12)*266666+CuspN.ar(100, 0.1)*0.00001;
 	var sig2 = LFNoise0.ar(1/2).lag+2/[2.02,3]/99++9;
@@ -263,7 +265,7 @@ SynthDef(\electric, { arg out=0, amp=0.1, pan=0,gate=1, rel= 0.3, saw=12;
 	var env =  EnvGen.ar(Env.linen(0.0,rel,0),doneAction:2);
 	sig3 =     FreeVerb.ar(CombN.ar(sig3, 1, sig2,9),0.25);
 	sig3 =     sig3.sum.tanh!2;
-	Out.ar(out, (sig3 * amp) * env);}).add;)
+	Out.ar(out, (sig3 * amp) * env);}).add;
 
 
 //      /////////////////////////////
@@ -272,7 +274,7 @@ SynthDef(\electric, { arg out=0, amp=0.1, pan=0,gate=1, rel= 0.3, saw=12;
 //
 // 3.1. SAW
 
-(
+
 SynthDef(\saw, {| out=0, freq, gate=1, amp=3|
 	var adsr = EnvGen.ar(Env.adsr(1e-8,1e-6,0.75,0.125), gate, doneAction:2);
 	var nvoices1 = 5, nvoices2 = 7;
@@ -293,11 +295,11 @@ SynthDef(\saw, {| out=0, freq, gate=1, amp=3|
 	var snd = BLowPass4.ar(osc1, 800, 0.5) + osc2 / 4 * amp ;
 	Out.ar(out, Splay.ar(snd*adsr)); // spread on stereo field
 }).add;
-)
+
 
 // 3.2. PROPHET
 
-(
+
 SynthDef(\prophet,{|out= 0 freq = 440 amp = 1.0 gate=1 lforate = 10 lfowidth= 0.5 cutoff= 12000 rq=0.5 pan = 0.0|
 	var lfo, pulse, filter, env;
 	lfo = LFTri.kr(lforate*[1,1.01],Rand(0,2.0)!2);
@@ -306,8 +308,8 @@ SynthDef(\prophet,{|out= 0 freq = 440 amp = 1.0 gate=1 lforate = 10 lfowidth= 0.
 	env = EnvGen.ar(Env.adsr(0.01,0.0,1.0,0.5),gate,doneAction:2);
 	Out.ar(out,amp* (Pan2.ar(Mix(filter)*env*amp*0.5,pan)));
 
-}).add
-)
+}).add;
+
 
 // 3.3. TECHNOBASS
 
@@ -324,7 +326,7 @@ SynthDef(\technobass, { |freq = 440, gate = 1, amp = 0.5, slideTime = 0.17, ffre
 
 // 3.4. DRONE
 
-(
+
 SynthDef(\drone, { arg out = 0, speed = 1, amp = 0.5, rel = 0.5, dur = 1, freq=200;
 	var base = LFNoise1;
     var adsr = EnvGen.ar(Env.linen(dur*4,rel,0, 1),doneAction:2);
@@ -332,12 +334,12 @@ SynthDef(\drone, { arg out = 0, speed = 1, amp = 0.5, rel = 0.5, dur = 1, freq=2
 	SinOscFB.ar([120,25],base.ar(speed)+1/2),base.ar(20))),220);
 	sig = (sig * adsr) * amp;
 	Out.ar(out, sig);
-}).add
-)
+}).add;
+
 
 // 3.5. DETUNED
 
-(
+
 SynthDef.new(\detuned, {
 	arg freq = 440, freqf = 3000, atk = 0.1, rel = 0.1, pan=0, amp=0.5;
     var env, synth1, synth2;
@@ -346,12 +348,12 @@ SynthDef.new(\detuned, {
     synth2 = LPF.ar(Pulse.ar(freq, 0.6, mul:0.1), freqf)*env;
 	Out.ar(0, amp * Splay.ar([synth1,synth2]));
 }).add;
-)
+
 
 
 // 3.6. ORGAN
 
-(
+
 SynthDef(\organ,{|out= 0 freq = 440 amp = 0.1 gate=1 lforate = 10 lfowidth= 0.0 cutoff= 100 rq=0.5 pan=0.0|
 
 	var vibrato, pulse, filter, env;
@@ -367,12 +369,12 @@ SynthDef(\organ,{|out= 0 freq = 440 amp = 0.1 gate=1 lforate = 10 lfowidth= 0.0 
 	Out.ar(out,Pan2.ar(filter*env*amp,pan));
 
 }).add;
-)
+
 
 
 
 // 3.7. ACID FROM OTOPHILIA
-(
+
 	SynthDef("acid", {
 		arg outBus=0, gate=1, pitch=50, amp=0.1;
 		var env1, env2, out;
@@ -397,18 +399,18 @@ SynthDef(\organ,{|out= 0 freq = 440 amp = 0.1 gate=1 lforate = 10 lfowidth= 0.0 
 		out = Limiter.ar(out, 1.0, 0.02);
 
 		ReplaceOut.ar(outBus, out);
-	}).play;
-)
+	}).add;
+
 
 // 3.8 SIMPLE PAD
 
-(
+
 SynthDef(\pad, { |out, freqScale=1, sustain=1, amp=0.1, saw=1|
 	var snd = Klang.ar(`[ Array.exprand(24, 100, 1000), 0.05, nil ], freqScale)!2;
 	snd = snd * EnvGen.ar(Env.sine(sustain), doneAction:2);
 	OffsetOut.ar(out, snd * amp)
-}).play;
-);
+}).add;
+
 
 
 
@@ -439,7 +441,9 @@ SynthDef(\kick_ss, {arg out = 0, amp = 1, att = 0.01, rel = 0.2, freq = 180, pan
 
 }).add;
 
+
 // 4.2.  SNARES
+
 
 SynthDef(\snare, {arg out = 0, amp = 1, att = 0.01, rel = 0.2, freq = 180, pan = 0, sinAmp=1.4, sinValue=180;
 
@@ -460,8 +464,8 @@ SynthDef(\snare, {arg out = 0, amp = 1, att = 0.01, rel = 0.2, freq = 180, pan =
 
 }).add;
 
-
 // 4.3. HH
+
 
 SynthDef(\hihat, {arg out = 0, amp = 0.5, att = 0.01, rel = 0.2, ffreq = 6000, pan = 0;
 	var snd = WhiteNoise.ar(amp);
@@ -481,7 +485,7 @@ SynthDef(\hihat, {arg out = 0, amp = 0.5, att = 0.01, rel = 0.2, ffreq = 6000, p
 
 // 5.1. VINYL
 
-(
+
 SynthDef(\vinyl, { | out=0, amp= 0.5, rel=0, dur=1, power=1, fade = 0, cracks=8, bpfvalue=600|
 	    var sig;
 	    var adsr = EnvGen.ar(Env.linen(dur,rel,0),doneAction:2);
@@ -489,7 +493,10 @@ SynthDef(\vinyl, { | out=0, amp= 0.5, rel=0, dur=1, power=1, fade = 0, cracks=8,
 	    sig = FreeVerb.ar(sig * amp, 0.2, 0.8, 0.5, 2);
 	    Out.ar(out, XFade2.ar(sig * adsr, LPF.ar(sig * adsr, bpfvalue), fade, 1));
 	    sig = sig.tanh;
-}).add
+}).add;
+
+
+
 )
 
 
