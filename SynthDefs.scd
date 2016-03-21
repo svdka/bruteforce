@@ -36,6 +36,7 @@
 // 3.6. ORGAN (BTR)
 // 3.7. ACID (FROM OTOPHILIA)
 // 3.8. SIMPLE PAD
+// 3.9. CLEANSIN
 
 
 //      ///////////////////
@@ -156,8 +157,8 @@ SynthDef(\daf_bass,{ |out, freq=440, sustain=1, gate=1, amp=0.5|
 
 	snd = RLPF.ar(snd, fenv.range(freq*2, freq*8), 0.75, 2) + (snd * 0.25);
 	env = EnvGen.kr(Env.adsr(0.001,0.2,0.9,0.25), gate, amp, doneAction:2);
-
-	snd = LeakDC.ar(Limiter.ar(snd * env));
+	snd = FreeVerb.ar(snd, 0.33, 1);
+	snd = LeakDC.ar(Limiter.ar(snd * env), 0.995);
 	OffsetOut.ar(out, (snd!2));
 }).add;
 
@@ -264,7 +265,7 @@ var	cutoff = EnvGen.ar(Env.perc(punch, freq));
 var snd = sig + sig2;
 var volamp = EnvGen.ar(Env.perc(0.01, 1000/freq, 1/freq));
     snd = LPF.ar(snd, cutoff + freq);
-    snd = snd * volamp;
+	snd = snd * volamp;
 	snd = snd * amp;
 	Out.ar(out, snd) ;
 }
@@ -299,6 +300,14 @@ SynthDef(\electric, { arg out=0, amp=0.1, pan=0,gate=1, rel= 0.3, saw=12;
 	sig3 =     sig3.sum.tanh!2;
 	Out.ar(out, (sig3 * amp) * env);}).add;
 
+
+SynthDef(\raybass, {arg amp = 0.5, sinfreq = 200, glissf = 0.001, att = 0.01, rel = 0.9;
+    var gliss = XLine.kr(sinfreq, sinfreq*glissf, rel);
+    var snd = SinOsc.ar(gliss);
+    var env = EnvGen.kr(Env.perc(att, rel), doneAction: 2);
+    snd = snd * env * amp;
+    Out.ar(0, snd);
+}).add;
 
 //      /////////////////////////////
 //      //3. ELECTRONIC INSTRUMENTS//
@@ -443,6 +452,19 @@ SynthDef(\pad, { |out, freqScale=1, sustain=1, amp=0.1, saw=1|
 	OffsetOut.ar(out, snd * amp)
 }).add;
 
+// 3.8 Sin w/t Mod (cleansin)
+
+SynthDef(\cleansin, { arg freq = 440, modfreq = 1, amp = 0.5, attack = 0.01, release = 0.1, pos = 0, gate = 1;
+	var carrier, modulator, env;
+	modulator = SinOsc.kr(modfreq).range(0, 1); // provides amplitude modulation for wobble
+	carrier = LFTri.ar(freq: freq, mul: modulator); // provides triangle wave for an interesting harmonic
+	env = Env.asr(
+		attackTime: attack,
+		sustainLevel: amp,
+		releaseTime: release).kr(doneAction: 2, gate: gate);
+	carrier = carrier * env;
+	Out.ar(0, Pan2.ar(carrier, pos))
+}).add;
 
 
 
@@ -510,6 +532,8 @@ SynthDef(\hihat, {arg out = 0, amp = 0.5, att = 0.01, rel = 0.2, ffreq = 6000, p
 
 
 
+
+
 //      ////////////
 //      // 5. MISC//
 //      ////////////
@@ -526,6 +550,49 @@ SynthDef(\vinyl, { | out=0, amp= 0.5, rel=0, dur=1, power=1, fade = 0, cracks=8,
 	    Out.ar(out, XFade2.ar(sig * adsr, LPF.ar(sig * adsr, bpfvalue), fade, 1));
 	    sig = sig.tanh;
 }).add;
+
+SynthDef(\vinyl2, { | out=0, amp= 0.5, rel=0, dur=1, power=1, fade = 0, cracks=8, bpfvalue=600, power2=60, multiply=0|
+	    var sig;
+	    var adsr = EnvGen.ar(Env.linen(dur,rel,0),doneAction:2);
+	sig = BPF.ar(Dust2.ar(cracks,0.8)+Dust2.ar(cracks,0.4)+VarSaw.ar(17,SinOscFB.ar(20),0.2, power)+Dust2.ar(cracks/4,0.1)!2 + (multiply *LPF.ar(FreeVerb.ar(VarSaw.ar(power2,LFPulse.ar(10, 0, 0.5, 5),0.823),SinOsc.ar(3, 0.5)),)),bpfvalue)!2;
+	    sig = FreeVerb.ar(sig * amp, 0.2, 0.8, 0.5, 4);
+	    Out.ar(out, XFade2.ar(sig * adsr, LPF.ar(sig * adsr, bpfvalue), fade, 1));
+	    sig = sig.tanh;
+}).add;
+
+
+
+
+
+
+
+// FIRST TRY TO MAKE A FILTERED NOISE SOMETHING
+
+// SynthDef(\noisepluck, {arg out = 0, amp = 1, att = 0.01, rel = 0.2, freq = 180, pan = 0, sinAmp=1.4, sinValue=180;
+//
+// 	var noise = PinkNoise.ar(0.08+LFNoise1.kr(0.3,0.02))+LPF.ar(Dust2.ar(LFNoise1.kr(1).range(20,50)),7000);
+// 	var noise2 = PinkNoise.ar(0.08+LFNoise1.kr(0.3,0.02))+LPF.ar(Dust2.ar(LFNoise1.kr(1).range(40,50)),7000);
+//
+// 	var pluck = Pluck.ar(noise + noise2, 1);
+//
+// 	var env  = EnvGen.kr(Env.perc(0.001, 0.1, 0, -4));
+// 	var env2 = EnvGen.kr(Env.perc(0.001, 8,   4, -4), doneAction: 2);
+// 	var sumenv = env + env2;
+// 	var snd = pluck * sumenv;
+//
+// 	var sig =  FreeVerb.ar(HPF.ar(snd, 3000), 0.5);
+//
+// 	sig = sig.tanh;
+//
+// 	Out.ar(out, sig * amp);
+//
+// }).add;
+
+
+
+
+
+
 
 
 
