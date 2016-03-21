@@ -23,14 +23,17 @@
 
 (
 ~cracks = Pbind(
-	\instrument, \vinyl,
-	\amp, 1.0,             // amplification level
-	\power, 2.8,           // amplitude of Varsaw OSC ( < 3)
+	\instrument, \vinyl,   // vinyl 2 is WIP
+	\amp, 0.8,             // amplification level
+	\power, 3.2,           // amplitude of Varsaw OSC ( < 3)
 	\fade, Pseq([0, 1], inf),            // = 1, reduces cracks spectrum
-	\cracks, 512,           // crack density (0..64)
+	// \fade, 1,
+	\cracks, Pwhite(1, 4, inf),           // crack density (0..64)
 	\bpfvalue, 600,        // range 600/1200
 	\dur, 1,
+	// \multiply, 1,       // vinyl 2
 ))
+
 
 
 ~cracks.play
@@ -56,49 +59,54 @@
 //      /////////////////// PIANO
 
 ~piano = Pbind(
-	\instrument, \piano_ss,
+	\instrument, \piano,
 	\scale, Scale.minor,
 	\octave, [4, 5],
 	\degree, Prand([0, 1, 2, 3, 6, 8], inf),
-	\dur,0.5,
+	\dur, 0.5,
 	\amp, 1,
-	\punch, 0.2,
+	\punch, 0.8,
 
 )
 
 ~piano.play
 
-//      /////////////////// SOME BASS
+//      /////////////////// SOME OVERSATURATED FUCKYA BASS
 
 (
 ~bass = Pbind(
 	\instrument, \daf_bass,
 	\scale,Scale.minor,
-	\octave, [3,4],         // some octave
-	\amp, 0.5,              // amplification level
-	\sus,1,                 // sustain level (if > dur : overlap)
-	\degree, Pswitch1([Pseq([[0,1],3,1,4], inf),Pseq([[1,3],3,1,3],inf)],Prand([0,1],inf)),
-	// \dur, Pseq([0.5,1,0.25,0.75,0.5,0.25, 0.5,1],inf),   // some dur sequence
-	\legato, 1.1,
+	\octave, [3,5],         // some octave
+	\amp, 0.2,              // amplification level
+	\sus, 0.01,                 // sustain level (if > dur : overlap)
+	// \degree, Pswitch1([Pseq([[0,1],3,1,4], inf),Pseq([[1,3],3,1,3],inf)],Prand([0,1],inf)),
+	\dur, Pseq([0.5,1,0.25,0.75,0.5,0.25, 0.5,1],inf),   // some dur sequence
+	\legato, 1,
+	\degree, Pseq([0!4, 1!4, 2!4, 0!4],inf) + 7,
+
 ))
 
 ~bass.play
 ~bass.fadeTime=0
+~bass.fadeTime=1
+~bass.quant=1
 
-//      ///////////////////
+//      ///////////////////  SIMPLE SAMPLE BASED KICK PLAYER
 
 (
-~tom = Pbind(
+~kick = Pbind(
 	\instrument, \readsf,
-	\buf,d[\lt_9][0],
+	\buf,d[\bd_8][2],
 	\dur, Pseq([0.25, 0.5, 0.75],inf),
-	\amp, 0.4,
+	\amp, 1,
 )
 )
 
-~tom.play
+~kick.play
+~kick.free
 
-//      ///////////////////
+//      /////////////////// SAW SYNTH
 
 (
 ~organ = Pbind(
@@ -115,7 +123,7 @@
 
 ~organ.play
 
-//      ///////////////////
+//      /////////////////// NICE LITTLE ACCOUSTIC GUITAR BALLAD'
 
 (
 ~guitar = Pbind(
@@ -134,44 +142,28 @@
 ~guitar.play
 
 
-//      ///////////////////
-
-(
-~bass = Pbind(
-	\instrument, \saw,
-	\octave,3,
-	\amp, 0.01,
-	\midinote, Pxrand([42,44,45,42],inf),
-	\amp, 0.5,
-	\dur, Pwhite(4),
-	\rel, 4,
-	\gate, 4,
-)
-)
-
-~bass.play
-
-//      ///////////////////
+//      /////////////////// GRANULAR SAMPLE PLAYER WITH SAMPLE SOURCE SWITCH
 
 
 (
 ~rcymbal = Pbind(
 	\instrument, \granular,
-	\buf,Pseq([d[\space][2,3,4],[d[\cy_8][0]]],inf),
+	\buf,Pseq([d[\space][2,3,4],[d[\cy_8][0]]],inf).trace,
+	// \buf,d[\noise][0],
 	\dur, Pwhite(0.9,1.1, inf),
 	\release, Pkey(\dur),
-	\rate,-1,
+	\rate,-0.5,
 	\atk, 1,
-	\filterFreq,Pwhite(0, 2000, inf),
-	\sPos,0.2,
-
+	\filterFreq,Pwhite(0, 1000, inf),
+	\sPos, Pwhite(0, 0.9, inf),
+	// \release, 0.1,
 )
 )
 
 ~rcymbal.play
 
 
-//      ///////////////////
+//      /////////////////// tidam tidoum tidum, tidam, tidum, tidoum ...
 
 (
 ~lead = Pbind(
@@ -187,65 +179,84 @@
 ~lead.fadeTime=20
 
 
-//      ///////////////////
+//      /////////////////// WANDERING BELL, alternative to Pkey
 
-(~melody = Pbind(
+(
+~melody = Pbind(
 	\instrument, \sos_bell,
 	\dur,0.5,
 	\sustain,1.5,
 	\i,Pstutter(16,Pfunc{rrand(4,10)*10}),
 	\freq,Pfunc{|e|exprand(50,500).round(e.i)},
-	\amp,Pgbrown(0.01,0.1),
+	\amp,Pgbrown(0.04,0.1),
 ))
 
 
 ~melody.play
 
 
-//      ///////////////////
-
-// PATTERN NEW THINGS
-
-(
-~snare = Pbind(
-	\instrument, \readsf,
-	\buf,d[\sd_9].choose,
-    \dur, 1,
-	)
-)
-
-~snares.play
+//      /////////////////// PATTERN NEW THINGS
 
 (
 ~snare = Pbind(
 	\instrument, \readsf,
 	\buf, Prand(d[\cy_8]++d[\bd_9],inf),
-    \dur, 2,
+    \dur, 0.5,
 
 ))
-~snare.quant(1)
+~snare.quant(4)
 ~snare.play
+
+//      /////////////////// degree could be described by suite (+4,+3,+2,+2,+3)
+
+~guitar = Pbind(
+	\instrument, \accoustic,
+	\scale, Scale.aeolian,
+	\ctranspose, -12,
+	\degree, Pseq([
+		[-7,-3, 0, 2, 4, 7],[7],
+		[-8, -4, -1, 1, 3, 6],[8],
+		[-9, -5, -2, 0, 2, 5],[-9],
+		[-5, -1, 2, 4, 6, 9],[-5],
+		[-4, 0, 3, 5, 7, 10],[-4],
+		], inf).trace,
+	\dur, Pseq([Pn(4, 3), 2, 2], inf),
+	\amp, 0.4,
+	\modfreq, Pseq([Pn(6.5, 3), 2, 6.5], inf),
+	\attack, 2,
+	\release, 1.2,
+	\pos, [-1, -0.7, -0.2, 0.2, 0.7, 1],
+	\gate, 0,
+);
+
+~guitar.play
+
 
 //      ///////////////////
 
-Pbind(
+~test = Pbind(
+	\instrument, \accoustic,
 	\dur,0.3,
 	\sustain,1.5,
 	\k,Pstutter(16,Pfunc{rrand(4,10)*10}),
 	\freq,Pfunc{|e|exprand(50,500).round(e.k)},
-	\amp,Pgbrown(0.01,0.1)).play
+	\amp,Pgbrown(0.05,0.2))
+
+
+~test.play
 
 
 
-Pbind(
+~test = Pbind(
+	\instrument, \accoustic,
 	\scale,	[0,2,4,7,9],
-	\degree, Pseq( 32.fib.fold( 0, 10 ), 4 ) + ( 2 * 1 + 1 ) - 10,
-	\dur,	1 + 2 ** 1 % 2 / 6
-	).play
+	\degree, Pseq( 32.fib.fold( 0, 10 ), inf ) + ( 2 * 1 + 1 ) - 10,
+	\dur,	1 + 2 ** 1 % 2 / 6,
+	)
 
-
-Pbind(
+~test = Pbind(
 	\scale, Scale.minor,
+	\instrument, \bass_filtered,
 	\octave, [3],
 	\root, 2,
 	\ctranspose,Pseq([
@@ -253,14 +264,14 @@ Pbind(
 		Pn(-5, 8 * 4)
 		], inf),
 	\degree, Pseq([7,7s,1,8,1,1,7,1]-1,inf),
-	\dur, 0.18,
+	\dur, 0.36,
 	\detune, Pseq([(0..2)],inf),
-).play
+)
 
 ~kick = Pbind(
 		\instrument, \kick_ss,
 		\dur, Pseq([1.5,2.5],inf),
-	\amp, 1.6,
+	\amp, 1,
 )
 
 ~kick.play
@@ -283,7 +294,7 @@ Pbind(
 
 
 ~guitar = Pbind (
-	\instrument, \bass_filtered,
+	\instrument, \daf_bass,
 		\scale, Scale.diminished2,
 		\octave, 2,
 		\degree, Pseq(
@@ -303,15 +314,15 @@ Pbind(
 ~guitar.play
 
 
-// DRUMKIT
+// DRUMKIT ---- OTHER WAY TO MAKE A Drum Kit
 
     // kick
 ~kick = Pbind(
 		\instrument, \kick_ss,
 		\freq,
 			Pseq([
-				Pseq([1,\,\,\,1,\,1,\]),
-				Pseq([1,\,\,\,1,\,\,\]),
+				Pseq([1,\,1,\,1,\,1,\]),
+				Pseq([1,\,1,\,1,\,1,\]),
 			],inf),
 		\amp, 0.25,
 		\dur, 0.5,
@@ -334,3 +345,18 @@ Pbind(
 ~kick.play;
 ~snare.play;
 )
+
+
+(
+~cleansin = Pbind(
+	\instrument, \technobass,
+	\scale,Scale.minor,
+	\octave, [3,5],         // some octave
+	\amp, 0.2,              // amplification level
+	\dur, Pseq([0.5,1,0.25,0.75,0.5,0.25, 0.5,1],inf),   // some dur sequence
+	\legato, 1,
+	\degree, Pseq([0!4, 1!4, 2!4, 0!4],inf) + 0,
+))
+
+~cleansin.play
+~cleansin.quant = 4;
