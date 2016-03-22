@@ -564,37 +564,121 @@ SynthDef(\vinyl2, { | out=0, amp= 0.5, rel=0, dur=1, power=1, fade = 0, cracks=8
 
 
 
-
-
-// FIRST TRY TO MAKE A FILTERED NOISE SOMETHING
-
-// SynthDef(\noisepluck, {arg out = 0, amp = 1, att = 0.01, rel = 0.2, freq = 180, pan = 0, sinAmp=1.4, sinValue=180;
-//
-// 	var noise = PinkNoise.ar(0.08+LFNoise1.kr(0.3,0.02))+LPF.ar(Dust2.ar(LFNoise1.kr(1).range(20,50)),7000);
-// 	var noise2 = PinkNoise.ar(0.08+LFNoise1.kr(0.3,0.02))+LPF.ar(Dust2.ar(LFNoise1.kr(1).range(40,50)),7000);
-//
-// 	var pluck = Pluck.ar(noise + noise2, 1);
-//
-// 	var env  = EnvGen.kr(Env.perc(0.001, 0.1, 0, -4));
-// 	var env2 = EnvGen.kr(Env.perc(0.001, 8,   4, -4), doneAction: 2);
-// 	var sumenv = env + env2;
-// 	var snd = pluck * sumenv;
-//
-// 	var sig =  FreeVerb.ar(HPF.ar(snd, 3000), 0.5);
-//
-// 	sig = sig.tanh;
-//
-// 	Out.ar(out, sig * amp);
-//
-// }).add;
+// STEP 3
 
 
 
 
+SynthDef(\densedrops, { | out=0, amp=0.5 |
+	var freq, vib, r;
+	var sound;
+	var env;
+
+	freq = LFCub.kr(LFCub.kr(0.2, 0, 8, 10));
+
+	vib = BPF.kr(PinkNoise.kr, freq, 0.3) * 10;
+
+	r = TRand.kr(
+		100, 100,
+		LFSaw.kr(vib, 0, 2, 30)
+	);
+
+	sound = BPF.ar( WhiteNoise.ar(1), r/3 );
+
+	sound = Decay.ar(
+		Impulse.ar(XLine.kr(10, 20, 4)),
+		0.2,
+		sound
+	);
+
+	sound = OnePole.ar(
+		sound,
+		FSinOsc.kr(Line.kr(0.1, 5, 10))
+	);
+
+	sound = Pan2.ar(
+		sound,
+		FSinOsc.kr(3),
+		1.0
+	);
+
+	env = EnvGen.ar(
+		Env.linen(0.8, 0.5, 4.0, 1, \welch),
+		doneAction: 2
+	);
+
+	sound = sound * amp;
+	Out.ar(out, sound * env);
+}).add;
 
 
+SynthDef(\blow, { | amp=0.5, out=0 |
+	var sound;
+	var env;
+
+	sound = OnePole.ar(
+		BPF.ar(WhiteNoise.ar(1), 100),
+		FSinOsc.kr(Line.kr(0.1, 5, 10))
+	);
+
+	sound = sound + Splay.ar(FreqShift.ar(sound, 10/(4..7)));
+	// sound = Pluck.ar(sound, Impulse.ar(1), 0.5);
+	sound = Pan2.ar(
+		sound,
+		FSinOsc.kr(1),
+		0.1
+	);
+
+	env = EnvGen.ar(
+		Env.linen(0.5, 0, 1, 1, \welch),
+		doneAction: 2
+	);
+	sound = sound * amp;
+	Out.ar(out, sound * env);
+}).add;
 
 
+// NOISE CYMBAL
+
+SynthDef(\sinbal, {	| out=0, amp = 1, octave=8.0 |
+	var noise, tempo;
+	var sound;
+	var env;
+
+	noise = HPF.ar(WhiteNoise.ar(0.2), 1000);
+
+	tempo = SinOsc.kr(0, 1, 0, 3800);
+
+	sound = RHPF.ar(noise, tempo, 1000) * 0.1;
+
+	env = EnvGen.ar(
+		Env.perc,
+		doneAction: 2
+	);
+
+	Out.ar(out, sound * env);
+}).add;
+
+SynthDef(\echo, { | freq = 1200, amp=0.5, out=0 |
+	var sound;
+	var env;
+	var envpitch;
+	// envpitch = EnvGen.ar(Env.adsr(0.1, 0.0001));
+	//
+	// sound = RLPF.ar(BrownNoise.ar(1), freq * envpitch, 0.001) * 1;
+	sound =    RLPF.ar(BrownNoise.ar(1), freq , 0.015,1) * 1;
+
+	2.do{|i|
+		sound = DelayN.ar(sound, 0.5, 0.1*i, 0, sound * amp);
+	};
+
+	env = EnvGen.ar(
+		Env.perc(0.01, 2, 1, -4),
+		doneAction: 2
+	);
+	sound = FreeVerb.ar(sound, 0.1, 0.4, 2);
+	Out.ar(out, sound * env);
+}).add;
 
 )
 
