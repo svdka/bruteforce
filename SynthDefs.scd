@@ -65,7 +65,7 @@
 
 // TO DO : add frequency shift
 SynthDef(\readsf,
-	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
+	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15, freq=440;
 		var sig,env ;
 		sig = Pan2.ar(PlayBuf.ar(1,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:2),pan);
 		env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:2);
@@ -123,6 +123,21 @@ SynthDef(\granular, {|out=0, buf, rate=1.0, sPos=0.1, attack=0.01, release=0.2, 
 }).add;
 
 
+SynthDef(\readsfsinfx,
+	{arg out = 0, buf = 0, amp = 0.5, pan = 0, pos = 0, rel=15, heartrate=5;
+		var sig,env ;
+	//	var rate = SinOscFB.ar(heartrate, 0.5, 1);
+		var rate = SinOsc.ar(heartrate, 0.1, 1);
+		sig = Pan2.ar(PlayBuf.ar(1,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:2),pan);
+		env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:2);
+		sig = FreeVerb.ar(sig * env, 0.33, 0.5,0.5);
+		sig = sig * amp;
+		Out.ar(out,sig);
+}).add;
+
+
+
+
 //      //////////////////////////
 //      //2. CLASSIC INSTRUMENTS//
 //      //////////////////////////
@@ -175,6 +190,20 @@ SynthDef(\bass_filtered,{ |out, freq=440, sustain=1, gate=1, amp=0.1|
 
 	OffsetOut.ar(out, (snd!2));
 }).add;
+
+// 2.4. Saw Bass
+
+(
+SynthDef(\sawbass, { arg out=0, freq = 440, amp = 0.5, gate = 1;
+	var snd, env, oscfreq, output;
+	oscfreq = {freq * LFNoise2.kr(0.5).range(0.98, 1.02)}!3;
+	snd = Splay.ar(LFSaw.ar(oscfreq, mul: amp));
+	env = Env.adsr(0.7, 4, 0, 0.1).kr(doneAction:2, gate: gate);
+	snd = snd;
+	output = LPF.ar(snd, (env*freq) + 2*freq);
+	Out.ar(out, output);
+	}).add;
+)
 
 
 // 2.3. Phase Modulated Bell
@@ -447,7 +476,7 @@ SynthDef(\organ,{|out= 0 freq = 440 amp = 0.1 gate=1 lforate = 10 lfowidth= 0.0 
 
 
 SynthDef(\pad, { |out, freqScale=1, sustain=1, amp=0.1, saw=1|
-	var snd = Klang.ar(`[ Array.exprand(24, 100, 1000), 0.05, nil ], freqScale)!2;
+	var snd = Klang.ar(`[ Array.exprand(4, 100, 1000), 0.05, nil ], freqScale)!2;
 	snd = snd * EnvGen.ar(Env.sine(sustain), doneAction:2);
 	OffsetOut.ar(out, snd * amp)
 }).add;
@@ -652,11 +681,11 @@ SynthDef(\sinbal, {	| out=0, amp = 1, octave=8.0 |
 	sound = RHPF.ar(noise, tempo, 1000) * 0.1;
 
 	env = EnvGen.ar(
-		Env.perc,
+		Env.perc(0.01, 2),
 		doneAction: 2
 	);
 
-	Out.ar(out, sound * env);
+	Out.ar(out, amp * (sound * env));
 }).add;
 
 SynthDef(\echo, { | freq = 1200, amp=0.5, out=0 |
@@ -673,12 +702,22 @@ SynthDef(\echo, { | freq = 1200, amp=0.5, out=0 |
 	};
 
 	env = EnvGen.ar(
-		Env.perc(0.01, 2, 1, -4),
+		Env.perc(0.01, 3, 1, -4),
 		doneAction: 2
 	);
 	sound = FreeVerb.ar(sound, 0.1, 0.4, 2);
 	Out.ar(out, sound * env);
 }).add;
+
+
+
+
+
+
+
+
+
+
 
 )
 
