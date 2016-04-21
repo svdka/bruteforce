@@ -16,13 +16,18 @@
 //      //2. CLASSIC INSTRUMENTS//
 //      //////////////////////////
 //
-// 2.1. ACCOUSTIC GUITAR
-// 2.2. DAF_BASS
-// 2.3. FILTER BASS
+// 2.1. ACCOUSTIC GUITAR (accoustic)
+// 2.2. DAF_BASS (daf_bass)
+// 2.3. FILTER BASS (bass_filtered)
+// 2.4  SAW BASS (bass_saw)
 // 2.3. BELL                              (freq = 261, tone = 4, art = 1, amp = 0.8, pan = 0)
 // 2.4. S.O.S BELL (Based on D.Stowell)
-// 2.5. PIANO
-// 2.6. SOUND AND SOUND PIANO
+// 2.5.
+// 2.6. PIANO
+// 2.7  SOUND AND SOUND PIANO (piano_ss)
+// 2.8  ELECTRIC
+// 2.9  SOUND SOUND PIANO
+// 2.10
 
 //      /////////////////////////////
 //      //3. ELECTRONIC INSTRUMENTS//
@@ -55,6 +60,18 @@
 // 5.1. VINYL                     (fade : crossfade between cracks & "beat", power : beat level)
 
 
+//      ///////////////////
+//      // 6. FX         //
+//      ///////////////////
+//
+// 6.1 REVERB (fx_reverb)
+// 6.2 CHORUS/COMPRESSION (fx_chorus)
+// 6.3 BITCRUSHER (fx_bit)
+// 6.4 DELAY
+
+// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+
+
 
 
 //      ///////////////////
@@ -62,6 +79,7 @@
 //      ///////////////////
 //
 // 1.1 READ SOUND FILE
+
 
 // TO DO : add frequency shift
 SynthDef(\readsf,
@@ -174,7 +192,7 @@ SynthDef(\daf_bass,{ |out, freq=440, sustain=1, gate=1, amp=0.5|
 	env = EnvGen.kr(Env.adsr(0.001,0.2,0.9,0.25), gate, amp, doneAction:2);
 	snd = FreeVerb.ar(snd, 0.33, 1);
 	snd = LeakDC.ar(Limiter.ar(snd * env), 0.995);
-	OffsetOut.ar(out, (snd!2));
+	OffsetOut.ar(out, (snd!2 * amp));
 }).add;
 
 // 2.3. FITLERED BASS
@@ -188,13 +206,13 @@ SynthDef(\bass_filtered,{ |out, freq=440, sustain=1, gate=1, amp=0.1|
 	fenv = EnvGen.kr(Env.adsr(1.0,0.8,0.75,0.8),gate,freq*35,freq/2);
 	snd = RLPF.ar(snd, fenv, 0.2).softclip * env * amp * 5;
 
-	OffsetOut.ar(out, (snd!2));
+	OffsetOut.ar(out, (snd!2 * amp ));
 }).add;
 
 // 2.4. Saw Bass
 
-(
-SynthDef(\sawbass, { arg out=0, freq = 440, amp = 0.5, gate = 1;
+
+SynthDef(\saw_bass, { arg out=0, freq = 440, amp = 0.5, gate = 1;
 	var snd, env, oscfreq, output;
 	oscfreq = {freq * LFNoise2.kr(0.5).range(0.98, 1.02)}!3;
 	snd = Splay.ar(LFSaw.ar(oscfreq, mul: amp));
@@ -203,10 +221,25 @@ SynthDef(\sawbass, { arg out=0, freq = 440, amp = 0.5, gate = 1;
 	output = LPF.ar(snd, (env*freq) + 2*freq);
 	Out.ar(out, output);
 	}).add;
-)
+
+//  warning high level glitch
+
+SynthDef(\bass2, { arg freq = 440, amp = 0.5, gate = 1;
+	var snd, env, oscfreq, output;
+	var lfo;
+	oscfreq = {freq * LFNoise2.kr(Rand(0.0001,0.5)).range(0.98, 1.02)}!13;
+	lfo = { SinOsc.kr({ 1/Rand(2,52) }!13) };
+	env = Env.adsr(0.07, 1, 0.9, 0.1).kr(doneAction:2, gate: gate);
+	output = LFSaw.ar(oscfreq, mul: lfo.value.range(0,1));
+	output = RLPF.ar(output, (env*freq) + 1*freq * lfo.value.range(1/4,2), lfo.value.range(0.1,1));
+	output = FreeVerb.ar(Splay.ar(output, lfo.value.range(0,1)), 0.5);
+	output = output * env * amp;
+	Out.ar(0, output);
+	}).add;
 
 
-// 2.3. Phase Modulated Bell
+
+// 2.5. Phase Modulated Bell
 
 
 SynthDef(\pbell, {
@@ -224,9 +257,7 @@ Out.ar(out, sig*amp);
 }).add;
 
 
-// 2.4. SOS Bell (Based on Dan Stowell Version)
-
-
+// 2.6. SOS Bell (Based on Dan Stowell Version)
 
 SynthDef(\sos_bell, { |freq=440, out=0, amp=0.1, pan=0|
 var son, strike, hum;
@@ -245,7 +276,7 @@ son = SinOsc.ar(#[2, 3, 4.1, 5.43, 6.8, 8.21] * freq, 0,
 Out.ar(out, Pan2.ar((son + strike + hum) * 4 * amp, pan));
 }).add;
 
-// 2.5 PIANO
+// 2.7 PIANO
 
 
 SynthDef(\piano, { arg out=0, amp=0.1, pan=0, freq=200, gate=1;
@@ -270,7 +301,7 @@ SynthDef(\piano, { arg out=0, amp=0.1, pan=0, freq=200, gate=1;
 }).add;
 
 
-// 2.6 SOUND ON SOUND PIANO
+// 2.8 SOUND ON SOUND PIANO
 
 SynthDef(\piano_ss,{ | out=0, amp=1, trigger=1,punch=0.5,freq=440|
 // HIGHER PART
@@ -301,24 +332,7 @@ var volamp = EnvGen.ar(Env.perc(0.01, 1000/freq, 1/freq));
 ).add;
 
 
-// 2.6 GRAND PIANO
-// (
-// SynthDef(\wip_piano, { | i |
-// 	var strike, env, noise, pitch, delayTime, detune;
-//
-// 	strike = Impulse.ar(0.01);
-// 	env = Decay2.ar(strike, 0.008, 0.04);
-//
-// 	detune = #[-0.05, 0, 0.04].at(1);
-// 	delayTime = 1 / (pitch + detune).midicps;
-// 	noise = LFNoise2.ar(3000, env);
-// 	pitch = (36 + 54.rand);
-//
-// 	var sig = Pan2.ar(Mix.ar(Array.fill(3,CombL.ar(noise,delayTime,delayTime,6))));
-// 	sig = Out.ar(out, sig); // spread on stereo field
-// }).play)
-
-
+// 2.9 ELECTRIC
 
 SynthDef(\electric, { arg out=0, amp=0.1, pan=0,gate=1, rel= 0.3, saw=12;
 	var sig =  Saw.ar(12)*266666+CuspN.ar(100, 0.1)*0.00001;
@@ -329,6 +343,7 @@ SynthDef(\electric, { arg out=0, amp=0.1, pan=0,gate=1, rel= 0.3, saw=12;
 	sig3 =     sig3.sum.tanh!2;
 	Out.ar(out, (sig3 * amp) * env);}).add;
 
+// 2.10 RAYBASS
 
 SynthDef(\raybass, {arg amp = 0.5, sinfreq = 200, glissf = 0.001, att = 0.01, rel = 0.9;
     var gliss = XLine.kr(sinfreq, sinfreq*glissf, rel);
@@ -445,18 +460,18 @@ SynthDef(\organ,{|out= 0 freq = 440 amp = 0.1 gate=1 lforate = 10 lfowidth= 0.0 
 
 // 3.7. ACID FROM OTOPHILIA
 
-	SynthDef("acid", {
-		arg outBus=0, gate=1, pitch=50, amp=0.1;
-		var env1, env2, out;
+	SynthDef(\acid, {
+		arg out=0, gate=1, pitch=50, amp=0.1 ;
+		var env1, env2, snd;
 		pitch = Lag.kr(pitch, 0.12 * (1-Trig.kr(gate, 0.001)) * gate);
 		env1 = EnvGen.ar(Env.new([0, 1.0, 0, 0], [0.001, 2.0, 0.04], [0, -4, -4], 2), gate, amp);
 		env2 = EnvGen.ar(Env.adsr(0.001, 0.8, 0, 0.8, 70, -4), gate);
-		out = LFPulse.ar(pitch.midicps, 0.0, 0.51, 2, -1);
+		snd = LFPulse.ar(pitch.midicps, 0.0, 0.51, 2, -1);
 
-		out = RLPF.ar(out, (pitch + env2).midicps, 0.3);
-		out = out * env1;
+		snd = RLPF.ar(snd, (pitch + env2).midicps, 0.3);
+		snd = snd * env1;
 
-		Out.ar(outBus, out.dup);
+		Out.ar(out,snd);
 	}).add(s);
 
 	SynthDef("fx", {
@@ -480,6 +495,40 @@ SynthDef(\pad, { |out, freqScale=1, sustain=1, amp=0.1, saw=1|
 	snd = snd * EnvGen.ar(Env.sine(sustain), doneAction:2);
 	OffsetOut.ar(out, snd * amp)
 }).add;
+
+// 3.9 Chicago pad by Headchant modified by grirgz
+
+
+
+SynthDef(\chicagopad2, { |out = 0, freq = 440, freq2=660, freq3=528, cutoff = 500, amp = 0.2, gate=1|
+
+    var snd;
+    var delay = 0.045+0.05;
+
+    freq = freq + SinOsc.kr(freq*1/2, 0, freq/2, 0);
+
+    snd = Saw.ar([freq, freq+1, freq-1, freq2, freq3] * [0.99,1])*0.1;
+
+    snd = snd + VarSaw.ar(0.99*[freq, freq+1, freq-1, freq2, freq3, freq2+1, freq3+1],0, LFTri.kr(7.13).range(0.00,0.1))*0.1;
+
+
+    snd = Mix(snd);
+    snd = FreeVerb.ar(snd, 0.51,10,0.1)*2;
+    snd = snd *8;
+    snd = RLPF.ar(snd, SinOsc.kr([0.1,4.2], 0, [1700,480], [4000,700,5000])/[20.51,20], SinOsc.ar(0.1,1.5*pi)+1.05)/3;
+    snd = Mix(snd);
+
+    snd = MoogFF.ar(snd, SinOsc.kr(0.08, 0.5, cutoff/10, cutoff), 3, 0);
+
+    snd = snd * EnvGen.ar(Env.dadsr(delay,0.4, 0.01,0.8,0.4), gate, doneAction:2);
+    //snd = snd * EnvGen.ar(Env.adsr(0.4, 0.01,0.8,0.4), gate, doneAction:2);
+
+    snd = [snd , AllpassC.ar(snd, delay, 0.05+SinOsc.ar(0.11).range(0,0.045), 0.3)];
+    snd = snd * amp;
+    Out.ar(out, snd);
+
+}).add;
+
 
 // 3.8 Sin w/t Mod (cleansin)
 
@@ -713,6 +762,23 @@ SynthDef(\echo, { | freq = 1200, amp=0.5, out=0 |
 
 
 
+// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+// 6. EFFECTS
+// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+
+
+// 6.1. REVERB
+
+
+
+SynthDef(\reverb, {|out=0, gate=1|
+	var source = In.ar;
+	var reverb = FreeVerb.ar(source, 0.5, 0.5, 0.5, 2);
+	Out.ar(0, reverb);
+}).add;
+
+
+
 
 
 
@@ -720,7 +786,23 @@ SynthDef(\echo, { | freq = 1200, amp=0.5, out=0 |
 
 
 )
-
-
-
-
+//
+//
+// {l=LocalIn.ar(2);k=LFSaw.ar(l,0,l,1);j=k.range(0.25,4.0);s=PitchShift.ar(SinOscFB.ar(j**[2,2.1],k),[0.05,0.03],j);LocalOut.ar(s);s}.play;
+//
+//
+// {l = LocalIn.ar(2);k=LFSaw.ar(l,0,l,1);j=k.range(0.25,4.0);s=PitchShift.ar(SinOscFB.ar(j**l.abs,k),[0.05,0.03],j);5.do{s=s.tanh+(s*0.1)};LocalOut.ar(s);s}.play;
+//
+//
+//
+// SynthDef(\localin, {|out=0, gate=1|
+// 	var feedback = LocalIn.ar(2);
+// 	var signal =   LFSaw.ar(feedback, 0, feedback, 1);
+// 	var signal2 =  signal.range(0.25, 4.0);
+// 	var signal3 =  PitchShift.ar(SinOscFB.ar(signal2**feedback.abs,signal2),[0.05,0.03],signal2);
+// 	var signal4 =  signal3.tanh+(signal3*0.1);
+// 	Out.ar(0, signal4);
+// }).play;
+//
+//
+//
